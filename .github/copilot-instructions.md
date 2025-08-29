@@ -63,10 +63,20 @@ src/
 ## Development Guidelines
 
 ### Focus: Quick Development & Working Code
-- **Priority**: Get working code quickly over perfect architecture
+- **Priority**: Get working boardgame.io integration quickly over perfect architecture
+- **Use framework patterns**: Leverage boardgame.io's built-in features rather than custom solutions
 - **No production concerns**: Skip optimization, security hardening, and scalability
-- **Prototype mindset**: Favor simple solutions that work over complex best practices
-- **Rapid iteration**: Build features incrementally and test by playing the game
+- **Prototype mindset**: Favor boardgame.io's established patterns over custom implementations
+- **Rapid iteration**: Build features incrementally using framework capabilities
+
+### boardgame.io Best Practices
+- Use `G` mutation directly - framework handles immutability automatically
+- Return `INVALID_MOVE` for move validation rather than throwing errors
+- Leverage `ctx` for all turn/phase/player management instead of custom state
+- Use `random` object for all randomness to maintain deterministic replay
+- Implement `playerView` for secret state rather than client-side hiding
+- Use `events` system for turn/phase transitions rather than manual state changes
+- Let `ai.enumerate` define valid moves and framework handle strategy
 
 ### Code Style
 - Use functional components with hooks (no class components)
@@ -76,12 +86,42 @@ src/
 - Use meaningful variable and function names when convenient
 
 ### boardgame.io Integration
+**Core Architecture:**
+- Use boardgame.io's two-object state pattern: `G` (your game state) and `ctx` (framework metadata)
 - Define game logic in separate files from React components
-- Use boardgame.io's `moves` for player actions
-- Implement `setup` function for initial game state
-- Use `ctx` (context) for turn management and player info
-- Implement `endIf` for win conditions
-- Use `events` for phase transitions
+- Leverage boardgame.io's immutability system - you can mutate `G` directly, framework handles immutability
+- Use `INVALID_MOVE` return value for move validation
+
+**Game Definition Structure:**
+- Use `setup` function for initial game state with `ctx` parameter for player count, etc.
+- Implement `moves` as pure functions that modify `G`
+- Use `endIf` for win conditions (return object available in `ctx.gameover`)
+- Implement `turn` configuration for turn management
+- Use `phases` for different game states (setup, playing, cleanup)
+- Add `ai.enumerate` function for bot move generation
+
+**State Management:**
+- Game state in `G` must be JSON-serializable (no functions/classes)
+- Use `ctx.currentPlayer`, `ctx.turn`, `ctx.numPlayers` for game metadata
+- Leverage `playerView` for secret information (hands, deck order)
+- Use `random` object for deterministic randomness (Shuffle, Die, etc.)
+
+**Turn and Phase Management:**
+- Use `turn.order` for custom turn orders (TurnOrder.DEFAULT, ONCE, CUSTOM, etc.)
+- Implement `turn.onBegin`, `turn.onEnd`, `turn.onMove` hooks
+- Use `turn.minMoves`/`turn.maxMoves` for automatic turn ending
+- Implement `phases` for game flow (draw phase -> play phase)
+- Use `events.endTurn()`, `events.endPhase()`, `events.setPhase()` for transitions
+
+**Events System:**
+- Call events from moves: `events.endTurn()`, `events.endPhase()`, `events.endGame()`
+- Use `setActivePlayers` for simultaneous player actions
+- Implement `stages` within turns for complex player interactions
+
+**AI Implementation:**
+- Define `ai.enumerate` to return array of possible moves: `[{move: 'moveName', args: [...]}]`
+- Framework provides MCTS bot automatically
+- Use simple move enumeration, let framework handle strategy
 
 ### State Management
 - Game state managed by boardgame.io
@@ -90,13 +130,12 @@ src/
 - Keep boardgame.io state immutable
 
 ### AI Implementation
-- Start with simple random AI
-- Gradually add strategic decision making
-- AI should make decisions based on:
-  - Current hand composition
-  - Known information about other players
-  - Deck state and probabilities
-  - Game phase and turn order
+- Use boardgame.io's built-in MCTS (Monte Carlo Tree Search) bot
+- Implement `ai.enumerate` to return array of possible moves: `[{move: 'moveName', args: [...]}]`
+- Framework automatically handles AI strategy and move selection
+- AI strength controlled by iteration count (default 1000)
+- Only enumerate moves for CPU players (check `player.isCPU`)
+- Let framework handle timing, decision-making, and execution
 
 ### Card System
 - Each card type should have:
@@ -159,20 +198,112 @@ const ComponentName = ({ prop1, prop2 }) => {
 };
 ```
 
-### boardgame.io Move Structure
+### boardgame.io Game Structure
 ```javascript
-const moveName = (G, ctx, ...args) => {
-  // Validate move
-  if (!isValidMove(G, ctx, ...args)) {
-    return INVALID_MOVE;
-  }
+import { INVALID_MOVE, TurnOrder, PlayerView } from 'boardgame.io/core';
+
+const ExplodingKittensGame = {
+  name: 'exploding-kittens',
   
-  // Apply move effects
-  // Always return new state, don't mutate G
-  return {
-    ...G,
-    // updated properties
-  };
+  setup: ({ ctx, random }) => {
+    // Use ctx.numPlayers, random.Shuffle(), etc.
+    const deck = createAndShuffleDeck(random);
+    return {
+      deck,
+      players: createPlayers(ctx.numPlayers),
+      discardPile: [],
+      // secret state for deck order
+      secret: { deckOrder: deck.map(c => c.id) }
+    };
+  },
+  
+  moves: {
+    playCard: ({ G, ctx, playerID, events, random }, cardIndex) => {
+      // Validate move
+      if (!canPlayCard(G, playerID, cardIndex)) {
+        return INVALID_MOVE;
+      }
+      
+      // Mutate G directly - framework handles immutability
+      const card = G.players[playerID].hand.splice(cardIndex, 1)[0];
+      G.discardPile.push(card);
+      
+      // Auto-end turn for simple cards
+      if (card.type === 'simple') {
+        events.endTurn();
+      }
+    },
+    
+    drawCard: ({ G, ctx, playerID, events, random }) => {
+      if (G.deck.length === 0) return INVALID_MOVE;
+      
+      const card = G.deck.pop();
+      G.players[playerID].hand.push(card);
+      
+      if (card.type === 'exploding') {
+        // Handle exploding kitten logic
+        handleExplodingKitten(G, playerID, events);
+      } else {
+        events.endTurn();
+      }
+    }
+  },
+  
+  turn: {
+    order: TurnOrder.DEFAULT,
+    minMoves: 1,
+    maxMoves: 1,
+    onBegin: ({ G, ctx, events }) => {
+      // Turn start logic
+    }
+  },
+  
+  phases: {
+    setup: {
+      start: true,
+      next: 'playing',
+      moves: { /* setup-only moves */ },
+      endIf: ({ G }) => G.setupComplete
+    },
+    playing: {
+      moves: { playCard, drawCard },
+      endIf: ({ G }) => getAlivePlayers(G).length <= 1
+    }
+  },
+  
+  endIf: ({ G, ctx }) => {
+    const alivePlayers = getAlivePlayers(G);
+    if (alivePlayers.length === 1) {
+      return { winner: alivePlayers[0].id };
+    }
+  },
+  
+  ai: {
+    enumerate: ({ G, ctx }) => {
+      const moves = [];
+      const player = G.players[ctx.currentPlayer];
+      
+      // Add playCard moves for each card
+      player.hand.forEach((card, index) => {
+        if (canPlayCard(G, ctx.currentPlayer, index)) {
+          moves.push({ move: 'playCard', args: [index] });
+        }
+      });
+      
+      // Add drawCard move if valid
+      if (canDrawCard(G, ctx.currentPlayer)) {
+        moves.push({ move: 'drawCard', args: [] });
+      }
+      
+      return moves;
+    }
+  },
+  
+  // Hide other players' hands and deck order
+  playerView: PlayerView.STRIP_SECRETS,
+  
+  // Use deterministic randomness
+  seed: 'development-seed'
 };
 ```
 
@@ -189,14 +320,93 @@ const cardType = {
 };
 ```
 
+### boardgame.io Client Usage
+```javascript
+// React Client
+import { Client } from 'boardgame.io/react';
+
+const App = Client({
+  game: ExplodingKittensGame,
+  board: GameBoard,
+  numPlayers: 4,
+  debug: true // Shows debug panel in development
+});
+
+// In React components - props automatically provided
+function GameBoard({ G, ctx, moves, events, playerID, isActive }) {
+  const handleCardPlay = (cardIndex) => {
+    if (isActive) {
+      moves.playCard(cardIndex);
+    }
+  };
+  
+  const handleDrawCard = () => {
+    if (isActive) {
+      moves.drawCard();
+    }
+  };
+  
+  // Use ctx.currentPlayer, ctx.turn, ctx.gameover
+  const isMyTurn = ctx.currentPlayer === playerID;
+  const gameOver = ctx.gameover;
+  
+  return (
+    <div>
+      {/* Render game state using G, ctx */}
+      <PlayerHand 
+        cards={G.players[playerID]?.hand || []} 
+        onCardPlay={handleCardPlay}
+        disabled={!isMyTurn || !isActive}
+      />
+      <button onClick={handleDrawCard} disabled={!isMyTurn || !isActive}>
+        Draw Card
+      </button>
+      {gameOver && <div>Winner: {gameOver.winner}</div>}
+    </div>
+  );
+}
+```
+
+### Secret State & Randomness
+```javascript
+// Use boardgame.io's secret state pattern
+const setup = ({ ctx, random }) => {
+  const deck = createDeck();
+  random.Shuffle(deck); // Deterministic shuffling
+  
+  return {
+    deck,
+    players: createPlayers(ctx.numPlayers),
+    // Secret information hidden from clients
+    secret: {
+      deckOrder: deck.map(c => c.id),
+      futureCards: deck.slice(0, 5)
+    }
+  };
+};
+
+// Use PlayerView.STRIP_SECRETS to automatically hide 'secret' key
+const game = {
+  setup,
+  playerView: PlayerView.STRIP_SECRETS,
+  // Always use random from moves for deterministic play
+  moves: {
+    shuffleDeck: ({ G, random }) => {
+      G.deck = random.Shuffle(G.deck);
+    }
+  }
+};
+```
+
 ## Notes for AI Assistant
-- **Hobby project mentality**: Focus on getting things working quickly
-- **No production concerns**: Skip best practices if they slow down development
+- **Hobby project mentality**: Focus on getting boardgame.io integration working quickly
+- **Use framework capabilities**: Always prefer boardgame.io's built-in features over custom solutions
 - Always use JavaScript, never TypeScript
-- Prefer simple solutions over complex architectures
-- Build incrementally - get something playable ASAP
-- Use placeholder content for graphics and styling initially
+- Import key boardgame.io utilities: `import { INVALID_MOVE, TurnOrder, PlayerView } from 'boardgame.io/core';`
+- Use React Client: `import { Client } from 'boardgame.io/react';`
+- Build incrementally - get basic boardgame.io game working ASAP
+- Use placeholder content for graphics initially
 - **Testing approach**: User will test by playing the game and report issues
 - Don't worry about edge cases unless they break core gameplay
-- Prioritize game mechanics over visual polish
-- When in doubt, choose the faster/simpler solution
+- Prioritize proper boardgame.io patterns over visual polish
+- When in doubt, check boardgame.io documentation patterns and choose the framework-recommended solution
