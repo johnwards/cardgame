@@ -1,13 +1,16 @@
 /**
- * Simple GameBoard Component for debugging
- * This minimal version will help identify what's causing the error
+ * Main GameBoard Component - boardgame.io Integration
+ * 
+ * Implements Task 3.1: Core React component integrated with boardgame.io Client
+ * - Receives {G, ctx, moves, playerID, isActive} props from boardgame.io
+ * - Displays game state using G.players, G.deck.length, G.discardPile
+ * - Shows turn indicator using ctx.currentPlayer and isActive prop
+ * - Handles game over display with ctx.gameover.winner information
+ * - Uses Tailwind CSS for responsive layout and styling
  */
 
 const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
-  // Simple error checking and debugging
-  console.log('GameBoard props:', { G, ctx, moves, playerID, isActive });
-
-  // Basic null checks
+  // Comprehensive error handling
   if (!G) {
     return <div className="p-8 text-red-600">Error: Game state (G) is null or undefined</div>;
   }
@@ -24,7 +27,7 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
     return <div className="p-8 text-red-600">Error: moves is null or undefined</div>;
   }
 
-  // Get current player safely
+  // Get player references safely
   const currentPlayer = G.players[ctx.currentPlayer];
   const humanPlayer = G.players[playerID];
 
@@ -36,112 +39,319 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
     return <div className="p-8 text-red-600">Error: humanPlayer is null or undefined</div>;
   }
 
-  // Simple render
+  // Check if human player has pending exploding kitten placement
+  const hasPendingExplodingKitten = G.secret?.pendingExplodingKitten &&
+    G.secret?.pendingExplodingKittenPlayer === playerID;
+
+  // Helper function to get player status for display
+  const getPlayerStatus = (player) => {
+    if (player.isEliminated) return 'Eliminated 💀';
+    if (ctx.currentPlayer === player.id) return 'Current Turn ⚡';
+    return 'Waiting';
+  };
+
+  // Helper function to get player card count display
+  const getPlayerCardCount = (player) => {
+    return `${player.hand?.length || 0} cards`;
+  };
+
+  // Handle exploding kitten placement
+  const handleExplodingKittenPlacement = (position) => {
+    if (moves.placeExplodingKitten && hasPendingExplodingKitten) {
+      moves.placeExplodingKitten(position);
+    }
+  };
+
+  // Render exploding kitten placement modal
+  const renderPlacementModal = () => {
+    if (!hasPendingExplodingKitten) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 max-w-md mx-4">
+          <h3 className="text-xl font-bold text-gray-800 mb-4">
+            💥 Place Exploding Kitten Back in Deck
+          </h3>
+          <p className="text-gray-600 mb-6">
+            You defused the Exploding Kitten! Choose where to place it back in the deck:
+          </p>
+          <div className="space-y-3">
+            <button
+              onClick={() => handleExplodingKittenPlacement(0)}
+              className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded"
+            >
+              Top of Deck (Most Dangerous)
+            </button>
+            <button
+              onClick={() => handleExplodingKittenPlacement(Math.floor(G.deck.length / 2))}
+              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded"
+            >
+              Middle of Deck
+            </button>
+            <button
+              onClick={() => handleExplodingKittenPlacement(G.deck.length)}
+              className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-4 rounded"
+            >
+              Bottom of Deck (Safest)
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-800 to-blue-900 p-4">
-      <div className="max-w-4xl mx-auto bg-white/10 backdrop-blur-sm rounded-lg p-6 text-white">
-        <h1 className="text-3xl font-bold mb-4">Exploding Kittens Debug</h1>
-
-        <div className="space-y-4">
-          <div>
-            <strong>Current Player:</strong> {currentPlayer.name} (ID: {ctx.currentPlayer})
+      <div className="max-w-6xl mx-auto">
+        {/* Game Header */}
+        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 mb-6 text-white">
+          <h1 className="text-4xl font-bold text-center mb-2">💥 Exploding Kittens 💥</h1>
+          <div className="text-center">
+            <span className="text-lg">Turn {ctx.turn}</span>
+            {G.lastAction && (
+              <span className="ml-4 text-yellow-300">• {G.lastAction}</span>
+            )}
           </div>
+        </div>
 
-          <div>
-            <strong>Your Player:</strong> {humanPlayer.name} (ID: {playerID})
+        {/* Game Over Display */}
+        {ctx.gameover && (
+          <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg p-8 mb-6 text-white text-center">
+            <h2 className="text-3xl font-bold mb-4">🎉 Game Over! 🎉</h2>
+            {ctx.gameover.winner && (
+              <div>
+                <p className="text-xl mb-2">
+                  Winner: <span className="font-bold">{ctx.gameover.winnerName || `Player ${ctx.gameover.winner}`}</span>
+                </p>
+                <p className="text-lg opacity-90">{ctx.gameover.reason}</p>
+              </div>
+            )}
+            {ctx.gameover.draw && (
+              <div>
+                <p className="text-xl mb-2">It's a Draw!</p>
+                <p className="text-lg opacity-90">{ctx.gameover.reason}</p>
+                {ctx.gameover.winners && (
+                  <p className="mt-2">
+                    Survivors: {ctx.gameover.winners.map(w => w.name).join(', ')}
+                  </p>
+                )}
+              </div>
+            )}
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-4 bg-white text-purple-600 font-bold py-2 px-6 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              New Game
+            </button>
           </div>
+        )}
 
-          <div>
-            <strong>Is Your Turn:</strong> {ctx.currentPlayer === playerID ? 'Yes' : 'No'}
-          </div>
-
-          <div>
-            <strong>Is Active:</strong> {isActive ? 'Yes' : 'No'}
-          </div>
-
-          <div>
-            <strong>Deck Size:</strong> {G.deck ? G.deck.length : 'undefined'}
-          </div>
-
-          <div>
-            <strong>Your Hand Size:</strong> {humanPlayer.hand ? humanPlayer.hand.length : 'undefined'}
-          </div>
-
-          <div>
-            <strong>Game Phase:</strong> {ctx.phase || 'undefined'}
-          </div>
-
-          <div>
-            <strong>Turn:</strong> {ctx.turn}
-          </div>
-
-          {ctx.gameover && (
-            <div className="bg-red-500 p-4 rounded">
-              <strong>Game Over:</strong> {JSON.stringify(ctx.gameover)}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Players Panel */}
+          <div className="lg:col-span-1">
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 text-white">
+              <h2 className="text-2xl font-bold mb-4">Players</h2>
+              <div className="space-y-4">
+                {Object.values(G.players).map((player) => (
+                  <div
+                    key={player.id}
+                    className={`p-4 rounded-lg border-2 transition-all ${ctx.currentPlayer === player.id
+                        ? 'border-yellow-400 bg-yellow-400/20 shadow-lg'
+                        : player.isEliminated
+                          ? 'border-red-400 bg-red-400/20 opacity-60'
+                          : 'border-white/30 bg-white/10'
+                      }`}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h3 className="font-bold text-lg">{player.name}</h3>
+                        <p className="text-sm opacity-80">{getPlayerStatus(player)}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold">{getPlayerCardCount(player)}</p>
+                        {player.id === playerID && (
+                          <p className="text-xs text-yellow-300">You</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          )}
+          </div>
 
-          {/* Simple action buttons */}
-          {ctx.currentPlayer === playerID && isActive && !ctx.gameover && (
-            <div className="space-x-4">
-              <button
-                onClick={() => {
-                  console.log('Draw button clicked');
-                  if (moves.drawCard) {
-                    moves.drawCard();
-                  } else {
-                    console.error('drawCard move not available');
-                  }
-                }}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-              >
-                Draw Card
-              </button>
+          {/* Game Area */}
+          <div className="lg:col-span-2">
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 text-white">
+              <div className="grid grid-cols-2 gap-6 mb-6">
+                {/* Draw Pile */}
+                <div className="text-center">
+                  <h3 className="text-xl font-bold mb-4">Draw Pile</h3>
+                  <div className="bg-blue-600 rounded-lg p-6 min-h-32 flex items-center justify-center">
+                    <div>
+                      <div className="text-4xl mb-2">🎴</div>
+                      <div className="font-bold text-lg">{G.deck?.length || 0} cards</div>
+                    </div>
+                  </div>
+                </div>
 
-              {humanPlayer.hand && humanPlayer.hand.length > 0 && (
-                <button
-                  onClick={() => {
-                    console.log('Play card button clicked');
-                    if (moves.playCard) {
-                      moves.playCard(0); // Play first card
-                    } else {
-                      console.error('playCard move not available');
-                    }
-                  }}
-                  className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-                >
-                  Play First Card
-                </button>
+                {/* Discard Pile */}
+                <div className="text-center">
+                  <h3 className="text-xl font-bold mb-4">Discard Pile</h3>
+                  <div className="bg-gray-600 rounded-lg p-6 min-h-32 flex items-center justify-center">
+                    <div>
+                      {G.discardPile?.length > 0 ? (
+                        <>
+                          <div className="text-4xl mb-2">
+                            {G.discardPile[G.discardPile.length - 1].emoji}
+                          </div>
+                          <div className="font-bold text-sm">
+                            {G.discardPile[G.discardPile.length - 1].name}
+                          </div>
+                          <div className="text-xs opacity-80">
+                            {G.discardPile.length} cards
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="text-4xl mb-2 opacity-50">🗑️</div>
+                          <div className="font-bold text-sm opacity-50">Empty</div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Current Turn Indicator */}
+              <div className="text-center mb-6">
+                <div className={`inline-block px-6 py-3 rounded-full font-bold text-lg ${ctx.currentPlayer === playerID
+                    ? 'bg-green-500 text-white'
+                    : 'bg-gray-500 text-white'
+                  }`}>
+                  {ctx.currentPlayer === playerID ? "Your Turn!" : `${currentPlayer.name}'s Turn`}
+                  {isActive && ctx.currentPlayer === playerID && (
+                    <span className="ml-2 animate-pulse">⚡</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              {ctx.currentPlayer === playerID && isActive && !ctx.gameover && !hasPendingExplodingKitten && (
+                <div className="flex justify-center space-x-4">
+                  <button
+                    onClick={() => {
+                      if (moves.drawCard) {
+                        moves.drawCard();
+                      }
+                    }}
+                    disabled={G.deck?.length === 0}
+                    className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-500 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-lg transition-colors"
+                  >
+                    Draw Card 🎴
+                  </button>
+                </div>
+              )}
+
+              {/* Pending Exploding Kitten Message */}
+              {hasPendingExplodingKitten && (
+                <div className="text-center">
+                  <div className="bg-red-500 text-white p-4 rounded-lg">
+                    <p className="font-bold">💥 You drew an Exploding Kitten!</p>
+                    <p>You defused it! Now choose where to place it back in the deck.</p>
+                  </div>
+                </div>
               )}
             </div>
-          )}
 
-          {/* Debug info */}
-          <details className="mt-8">
-            <summary className="cursor-pointer text-yellow-300">Debug Info (Click to expand)</summary>
-            <div className="mt-4 p-4 bg-black/20 rounded text-xs">
-              <div className="mb-2">
-                <strong>G:</strong>
-                <pre className="whitespace-pre-wrap text-xs">
-                  {JSON.stringify(G, null, 2)}
-                </pre>
-              </div>
-              <div className="mb-2">
-                <strong>ctx:</strong>
-                <pre className="whitespace-pre-wrap text-xs">
-                  {JSON.stringify(ctx, null, 2)}
+            {/* Human Player Hand */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 mt-6 text-white">
+              <h2 className="text-2xl font-bold mb-4">Your Hand</h2>
+              {humanPlayer.hand && humanPlayer.hand.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                  {humanPlayer.hand.map((card, index) => (
+                    <div
+                      key={card.id}
+                      className={`bg-white text-gray-800 rounded-lg p-3 text-center cursor-pointer hover:shadow-lg transform hover:scale-105 transition-all ${ctx.currentPlayer === playerID && isActive && !ctx.gameover && !hasPendingExplodingKitten
+                          ? 'hover:bg-yellow-100'
+                          : 'cursor-not-allowed opacity-75'
+                        }`}
+                      onClick={() => {
+                        if (ctx.currentPlayer === playerID && isActive && !ctx.gameover && !hasPendingExplodingKitten && moves.playCard) {
+                          moves.playCard(index);
+                        }
+                      }}
+                    >
+                      <div className="text-3xl mb-2">{card.emoji}</div>
+                      <div className="font-bold text-xs">{card.name}</div>
+                      <div className="text-xs opacity-70 mt-1">{card.description}</div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 opacity-60">
+                  <div className="text-4xl mb-2">🃏</div>
+                  <p>No cards in hand</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Debug Panel (Development Mode) */}
+        {import.meta.env.DEV && (
+          <details className="mt-6 bg-black/20 backdrop-blur-sm rounded-lg p-4 text-white">
+            <summary className="cursor-pointer text-yellow-300 font-bold">
+              🛠️ Debug Information (Click to expand)
+            </summary>
+            <div className="mt-4 space-y-4 text-xs">
+              <div>
+                <strong>Game State (G):</strong>
+                <pre className="bg-black/30 p-2 rounded mt-1 overflow-auto max-h-32">
+                  {JSON.stringify({
+                    deckLength: G.deck?.length,
+                    discardPileLength: G.discardPile?.length,
+                    players: Object.fromEntries(
+                      Object.entries(G.players || {}).map(([id, player]) => [
+                        id,
+                        {
+                          name: player.name,
+                          handSize: player.hand?.length,
+                          isEliminated: player.isEliminated,
+                          isCPU: player.isCPU
+                        }
+                      ])
+                    ),
+                    hasPendingExplodingKitten: !!G.secret?.pendingExplodingKitten
+                  }, null, 2)}
                 </pre>
               </div>
               <div>
-                <strong>moves:</strong>
-                <pre className="whitespace-pre-wrap text-xs">
+                <strong>Context (ctx):</strong>
+                <pre className="bg-black/30 p-2 rounded mt-1 overflow-auto max-h-32">
+                  {JSON.stringify({
+                    turn: ctx.turn,
+                    currentPlayer: ctx.currentPlayer,
+                    phase: ctx.phase,
+                    gameover: ctx.gameover,
+                    playerID,
+                    isActive
+                  }, null, 2)}
+                </pre>
+              </div>
+              <div>
+                <strong>Available Moves:</strong>
+                <pre className="bg-black/30 p-2 rounded mt-1">
                   {JSON.stringify(Object.keys(moves || {}), null, 2)}
                 </pre>
               </div>
             </div>
           </details>
-        </div>
+        )}
       </div>
+
+      {/* Exploding Kitten Placement Modal */}
+      {renderPlacementModal()}
     </div>
   );
 };
