@@ -524,18 +524,20 @@ const ExplodingKittensGame = {
   },
 
   /**
-   * AI configuration for CPU players
+   * AI configuration for CPU players using boardgame.io's built-in MCTS bot
    */
   ai: {
     /**
-     * Enumerate possible moves for AI players
+     * Enumerate possible moves for AI players with enhanced decision logic
      * @param {Object} G - Game state
      * @param {Object} ctx - Game context
+     * @param {string} playerID - ID of the player (for multi-player enumeration)
      * @returns {Array} Array of possible moves for current player
      */
-    enumerate: ({ G, ctx }) => {
+    enumerate: ({ G, ctx, playerID }) => {
       const moves = [];
-      const player = G.players[ctx.currentPlayer];
+      const currentPlayerID = playerID || ctx.currentPlayer;
+      const player = G.players[currentPlayerID];
 
       // Don't enumerate for human player or eliminated players
       if (!player || !player.isCPU || player.isEliminated) {
@@ -543,7 +545,7 @@ const ExplodingKittensGame = {
       }
 
       // Check if player can make moves (not blocked by pending exploding kitten)
-      if (!canPlayerMakeMove(G, ctx.currentPlayer)) {
+      if (!canPlayerMakeMove(G, currentPlayerID)) {
         return moves;
       }
 
@@ -551,19 +553,78 @@ const ExplodingKittensGame = {
       // Human players with pending kittens get moves through UI (not AI enumeration)
       // Only enumerate normal moves for CPU players
 
-      // For Phase 1, AI can play any non-exploding kitten card in hand
+      // Enhanced AI decision logic for Phase 1
+      const playableCards = [];
       player.hand.forEach((card, index) => {
         if (canPlayCard(card)) {
-          moves.push({ move: 'playCard', args: [index] });
+          playableCards.push({ card, index });
         }
       });
 
-      // AI can always try to draw a card (if deck not empty)
+      // Strategy: Balance between playing cards and drawing
+      // CPU should sometimes play cards to manage hand size and sometimes draw to advance game
+      
+      // Add card playing moves with strategic weighting
+      playableCards.forEach(({ index }) => {
+        moves.push({ move: 'playCard', args: [index] });
+      });
+
+      // Always include draw option if deck has cards
       if (G.deck.length > 0) {
         moves.push({ move: 'drawCard', args: [] });
       }
 
+      // For CPU decision making: prefer to play cards if hand is getting large (>6 cards)
+      // or if they have many cards. This creates more dynamic gameplay.
+      if (player.hand.length > 6 && playableCards.length > 0) {
+        // Weight towards playing cards when hand is large
+        // Add extra play card moves to increase probability
+        playableCards.slice(0, 2).forEach(({ index }) => {
+          moves.push({ move: 'playCard', args: [index] });
+        });
+      }
+
       return moves;
+    },
+
+    /**
+     * Configure MCTS bot parameters for CPU players
+     */
+    bot: {
+      // Number of iterations for MCTS simulation
+      iterations: 100,
+      
+      // Enable objective function for better decision making
+      objectives: {
+        // Prefer moves that keep player alive (avoid risky draws when possible)
+        survival: ({ G, playerID }) => {
+          const player = G.players[playerID];
+          if (!player || player.isEliminated) return 0;
+          
+          // Higher value for having defuse cards
+          const defuseCards = player.hand.filter(card => isDefuseCard(card)).length;
+          const survivalScore = defuseCards * 10;
+          
+          // Penalty for large hand size (more vulnerable to favor attacks in future phases)
+          const handSizePenalty = Math.max(0, player.hand.length - 8) * 2;
+          
+          return survivalScore - handSizePenalty;
+        },
+        
+        // Prefer moves that advance the game state
+        progress: ({ G, ctx }) => {
+          // Reward drawing cards to advance the game
+          const turnProgress = ctx.turn * 0.1;
+          
+          // Reward having fewer total cards in play (closer to endgame)
+          const totalCardsInPlay = Object.values(G.players)
+            .filter(p => !p.isEliminated)
+            .reduce((sum, p) => sum + p.hand.length, 0);
+          const progressScore = Math.max(0, 32 - totalCardsInPlay) * 0.5;
+          
+          return turnProgress + progressScore;
+        }
+      }
     }
   },
 
