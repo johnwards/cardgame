@@ -8,7 +8,7 @@
  */
 
 import { INVALID_MOVE, TurnOrder, PlayerView } from 'boardgame.io/core';
-import { setupGameDeck, CARD_TYPES, isExplodingKitten, isDefuseCard, findCardOfType } from '../constants/cards.js';
+import { setupGameDeck, CARD_TYPES, isExplodingKitten, isDefuseCard } from '../constants/cards.js';
 
 /**
  * Creates a player object with initial state
@@ -44,7 +44,57 @@ function getAlivePlayers(G) {
  * @returns {boolean} True if player has at least one defuse card
  */
 function hasDefuseCard(player) {
-  return findCardOfType(player.hand, CARD_TYPES.DEFUSE) !== null;
+  return player.hand.some(card => isDefuseCard(card));
+}
+
+/**
+ * Checks if a player can currently make moves in the game
+ * Used by AI enumeration to determine if CPU players should generate moves
+ * @param {Object} G - Game state object containing players and secret state
+ * @param {string} playerID - Unique identifier of the player to check
+ * @returns {boolean} True if player can make moves, false if blocked or eliminated
+ * 
+ * Returns false if:
+ * - Player doesn't exist or is eliminated
+ * - Player is human and has a pending exploding kitten placement
+ * - Player is in an invalid state for move generation
+ */
+function canPlayerMakeMove(G, playerID) {
+  const player = G.players[playerID];
+  if (!player || player.isEliminated) return false;
+
+  // If player has a pending exploding kitten and is not CPU, they can only place it
+  if (G.secret.pendingExplodingKitten && !player.isCPU && G.secret.pendingExplodingKittenPlayer === playerID) {
+    return false; // They must use placeExplodingKitten move, not enumerated moves
+  }
+
+  return true;
+}
+
+/**
+ * Checks if a card can be played from a player's hand
+ * In Phase 1, only non-exploding kitten cards can be played directly
+ * @param {Object} card - Card object to validate for playing
+ * @returns {boolean} True if card can be played, false otherwise
+ * 
+ * Returns false if:
+ * - Card is null/undefined
+ * - Card is an Exploding Kitten (these are only drawn, never played directly)
+ * - Card has invalid structure (future validation)
+ */
+function canPlayCard(card) {
+  return card && !isExplodingKitten(card);
+}/**
+ * Gets a random position in the deck for placing cards
+ * Uses boardgame.io's deterministic random system for proper game synchronization
+ * @param {Object} random - boardgame.io random object
+ * @param {number} deckLength - Current length of the deck
+ * @returns {number} Random position from 0 to deckLength (inclusive)
+ */
+function getRandomDeckPosition(random, deckLength) {
+  // random.D(n) returns 1 to n, so subtract 1 to get 0 to n-1
+  // Add 1 to deckLength to include position at end of deck
+  return random.D(deckLength + 1) - 1;
 }
 
 /**
@@ -117,7 +167,7 @@ const ExplodingKittensGame = {
   },
 
   /**
-   * Move definitions - currently placeholders for future implementation
+   * Move definitions - Phase 2.1 implementation with complete validation and logic
    */
   moves: {
     /**
@@ -125,47 +175,85 @@ const ExplodingKittensGame = {
      * @param {Object} G - Game state
      * @param {Object} ctx - Game context
      * @param {string} playerID - ID of player making the move
-     * @param {Object} events - Game events for turn management
      * @param {number} cardIndex - Index of card in player's hand to play
      */
-    playCard: ({ G, playerID }, cardIndex) => {
-      // Validation - return INVALID_MOVE for invalid actions
+    playCard: ({ G, ctx, playerID }, cardIndex) => {
+      // Comprehensive validation - return INVALID_MOVE for invalid actions
       const player = G.players[playerID];
+
+      // Check if player exists and is not eliminated
       if (!player || player.isEliminated) {
         return INVALID_MOVE;
       }
 
-      if (cardIndex < 0 || cardIndex >= player.hand.length) {
+      // Check if it's the player's turn
+      if (ctx.currentPlayer !== playerID) {
         return INVALID_MOVE;
       }
 
-      // For Phase 1, playing cards just moves them to discard pile
-      // Move logic implementation will be added in Phase 2
-      const card = player.hand.splice(cardIndex, 1)[0];
-      G.discardPile.push(card);
+      // Check if player has a pending exploding kitten that must be placed first
+      if (G.secret.pendingExplodingKitten && !player.isCPU) {
+        return INVALID_MOVE;
+      }
+
+      // Validate card index
+      if (typeof cardIndex !== 'number' || cardIndex < 0 || cardIndex >= player.hand.length) {
+        return INVALID_MOVE;
+      }
+
+      // Get the card to be played
+      const card = player.hand[cardIndex];
+      if (!card) {
+        return INVALID_MOVE;
+      }
+
+      // In Phase 1, we don't allow playing Exploding Kittens directly
+      // (they should only be drawn and then dealt with)
+      if (isExplodingKitten(card)) {
+        return INVALID_MOVE;
+      }
+
+      // Move card from hand to discard pile
+      const playedCard = player.hand.splice(cardIndex, 1)[0];
+      G.discardPile.push(playedCard);
       player.handSize = player.hand.length;
 
       // Update game metadata
-      G.lastAction = `${player.name} played ${card.name}`;
+      G.lastAction = `${player.name} played ${playedCard.name}`;
 
-      // Note: Playing cards does NOT end turn in Exploding Kittens
+      // Important: Playing cards does NOT end turn in Exploding Kittens
       // Players must explicitly draw or use a turn-ending action
+      // The turn continues and player can play more cards or draw
     },
 
     /**
-     * Draw a card from the deck
+     * Draw a card from the deck - this ALWAYS ends the turn
      * @param {Object} G - Game state
      * @param {Object} ctx - Game context
      * @param {string} playerID - ID of player making the move
      * @param {Object} events - Game events for turn management
+     * @param {Object} random - boardgame.io random object for deterministic randomness
      */
-    drawCard: ({ G, playerID, events }) => {
-      // Validation
+    drawCard: ({ G, ctx, playerID, events, random }) => {
+      // Comprehensive validation
       const player = G.players[playerID];
+
+      // Check if player exists and is not eliminated
       if (!player || player.isEliminated) {
         return INVALID_MOVE;
       }
 
+      // Check if it's the player's turn
+      if (ctx.currentPlayer !== playerID) {
+        return INVALID_MOVE;
+      }
+
+      // Check if player has a pending exploding kitten that must be placed first
+      if (G.secret.pendingExplodingKitten && !player.isCPU) {
+        return INVALID_MOVE;
+      }
+
+      // Check if deck is empty
       if (G.deck.length === 0) {
         return INVALID_MOVE;
       }
@@ -180,28 +268,31 @@ const ExplodingKittensGame = {
 
       // Check if drawn card is an Exploding Kitten
       if (isExplodingKitten(drawnCard)) {
+        // Remove the exploding kitten from player's hand immediately
+        const kittenIndex = player.hand.findIndex(card => isExplodingKitten(card));
+        const explodingKitten = player.hand.splice(kittenIndex, 1)[0];
+        player.handSize = player.hand.length;
+
         if (hasDefuseCard(player)) {
           // Player has defuse card - they survive but must place the kitten back
           const defuseCard = removeDefuseCard(player);
           G.discardPile.push(defuseCard);
 
-          // Remove exploding kitten from hand temporarily
-          const kittenIndex = player.hand.findIndex(card => isExplodingKitten(card));
-          const explodingKitten = player.hand.splice(kittenIndex, 1)[0];
-          player.handSize = player.hand.length;
-
           // Store the exploding kitten for placement - awaiting player choice
           G.secret.pendingExplodingKitten = explodingKitten;
+          G.secret.pendingExplodingKittenPlayer = playerID;
           G.lastAction = `${player.name} defused an Exploding Kitten!`;
 
-          // For CPU players: auto-place and end turn
+          // For CPU players: auto-place randomly and end turn
           // For human players: keep turn active until they place the kitten
           if (player.isCPU) {
-            // CPU auto-places randomly and ends turn
-            const randomPosition = Math.floor(Math.random() * (G.deck.length + 1));
+            // CPU auto-places at random position and ends turn
+            const randomPosition = getRandomDeckPosition(random, G.deck.length);
             G.deck.splice(randomPosition, 0, explodingKitten);
             G.secret.explodingKittenPositions.push(randomPosition);
             delete G.secret.pendingExplodingKitten;
+            delete G.secret.pendingExplodingKittenPlayer;
+            G.lastAction = `${player.name} placed the Exploding Kitten back in the deck`;
             events.endTurn();
           }
           // Human players: turn continues, they must use placeExplodingKitten move
@@ -209,10 +300,17 @@ const ExplodingKittensGame = {
           // Player has no defuse card - they are eliminated
           player.isEliminated = true;
           G.lastAction = `${player.name} exploded and was eliminated!`;
+
+          // Put the exploding kitten back in a random position in the deck
+          const randomPosition = getRandomDeckPosition(random, G.deck.length);
+          G.deck.splice(randomPosition, 0, explodingKitten);
+          G.secret.explodingKittenPositions.push(randomPosition);
+
           events.endTurn();
         }
       } else {
-        // Normal card drawn - turn ends
+        // Normal card drawn - turn ends immediately
+        // Drawing a card ALWAYS ends your turn in Exploding Kittens
         events.endTurn();
       }
     },
@@ -225,29 +323,54 @@ const ExplodingKittensGame = {
      * @param {Object} events - Game events for turn management
      * @param {number} position - Position in deck to place the kitten (0 = top)
      */
-    placeExplodingKitten: ({ G, playerID, events }, position) => {
-      // This move will be fully implemented in Phase 2
-      // For now, it's a placeholder for the exploding kitten placement interface
+    placeExplodingKitten: ({ G, ctx, playerID, events }, position) => {
+      // Comprehensive validation
+      const player = G.players[playerID];
 
+      // Check if player exists and is not eliminated
+      if (!player || player.isEliminated) {
+        return INVALID_MOVE;
+      }
+
+      // Check if it's the player's turn
+      if (ctx.currentPlayer !== playerID) {
+        return INVALID_MOVE;
+      }
+
+      // Check if there's a pending exploding kitten to place
       if (!G.secret.pendingExplodingKitten) {
+        return INVALID_MOVE;
+      }
+
+      // Check if this player is the one who drew the exploding kitten
+      if (G.secret.pendingExplodingKittenPlayer !== playerID) {
+        return INVALID_MOVE;
+      }
+
+      // Validate position parameter
+      if (typeof position !== 'number') {
         return INVALID_MOVE;
       }
 
       const explodingKitten = G.secret.pendingExplodingKitten;
       delete G.secret.pendingExplodingKitten;
+      delete G.secret.pendingExplodingKittenPlayer;
 
-      // Validate position
-      const maxPosition = G.deck.length;
-      const finalPosition = Math.max(0, Math.min(position, maxPosition));
+      // Position validation with explicit constants for clarity
+      const TOP_OF_DECK = 0;
+      const BOTTOM_OF_DECK = G.deck.length;
 
-      // Place kitten in deck
-      G.deck.splice(finalPosition, 0, explodingKitten);
-      G.secret.explodingKittenPositions.push(finalPosition);
+      // Validate and clamp position to valid range [0, deck.length]
+      // 0 = top of deck, deck.length = bottom of deck (after last card)
+      const clampedPosition = Math.max(TOP_OF_DECK, Math.min(Math.floor(position), BOTTOM_OF_DECK));
 
-      const player = G.players[playerID];
+      // Place kitten in deck at the specified position
+      G.deck.splice(clampedPosition, 0, explodingKitten);
+      G.secret.explodingKittenPositions.push(clampedPosition);
+
       G.lastAction = `${player.name} placed the Exploding Kitten back in the deck`;
 
-      // End turn after placing kitten
+      // End turn after placing kitten - this completes the draw action
       events.endTurn();
     }
   },
@@ -419,13 +542,20 @@ const ExplodingKittensGame = {
         return moves;
       }
 
+      // Check if player can make moves (not blocked by pending exploding kitten)
+      if (!canPlayerMakeMove(G, ctx.currentPlayer)) {
+        return moves;
+      }
+
       // CPU players cannot have pending exploding kittens since they auto-place immediately
       // Human players with pending kittens get moves through UI (not AI enumeration)
       // Only enumerate normal moves for CPU players
 
-      // For Phase 1, AI can play any card in hand
+      // For Phase 1, AI can play any non-exploding kitten card in hand
       player.hand.forEach((card, index) => {
-        moves.push({ move: 'playCard', args: [index] });
+        if (canPlayCard(card)) {
+          moves.push({ move: 'playCard', args: [index] });
+        }
       });
 
       // AI can always try to draw a card (if deck not empty)

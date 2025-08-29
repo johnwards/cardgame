@@ -46,7 +46,7 @@ This implementation plan breaks down the Exploding Kittens Phase 1 feature into 
 ## Phase 2: Core Gameplay Moves and Logic
 
 ### 2.1 Basic Card Play and Draw Moves
-- [ ] **Deliverable**: Core move functions with proper validation and state management
+- [x] **Deliverable**: Core move functions with proper validation and state management
 - **Implementation Details**:
   - Implement `playCard` move with card validation and discard pile management
   - Implement `drawCard` move with deck management and turn ending
