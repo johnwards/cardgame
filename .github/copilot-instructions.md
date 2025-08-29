@@ -1,7 +1,7 @@
 # Copilot Instructions - Card Game Project
 
 ## Project Overview
-This is a web-based card game clone of Exploding Kittens mechanics, built as a 4-player game (1 human player vs 3 CPU players). The game is client-side only and uses React with standard JavaScript (no TypeScript).
+This is a web-based card game clone of Exploding Kittens mechanics, built as a 4-player game (1 human player vs 3 CPU players). This is a **hobby/toy project** focused on **quick development and working code** rather than production polish. The game is client-side only and uses React with standard JavaScript (no TypeScript).
 
 ## Technology Stack
 - **Frontend Framework**: React (latest stable version)
@@ -62,13 +62,18 @@ src/
 
 ## Development Guidelines
 
+### Focus: Quick Development & Working Code
+- **Priority**: Get working code quickly over perfect architecture
+- **No production concerns**: Skip optimization, security hardening, and scalability
+- **Prototype mindset**: Favor simple solutions that work over complex best practices
+- **Rapid iteration**: Build features incrementally and test by playing the game
+
 ### Code Style
 - Use functional components with hooks (no class components)
 - Use arrow functions for component definitions
-- Use destructuring for props and state
-- Keep components small and focused
-- Use meaningful variable and function names
-- Add JSDoc comments for complex functions
+- Keep code simple and readable
+- Don't worry about perfect organization - focus on functionality
+- Use meaningful variable and function names when convenient
 
 ### boardgame.io Integration
 - Define game logic in separate files from React components
@@ -112,30 +117,12 @@ src/
 - **Game Log**: Display recent actions for all players
 - **Responsive Design**: Should work on desktop and tablet
 
-## Performance Guidelines
-- Lazy load components where possible
-- Optimize re-renders with React.memo where needed
-- Use keys properly in lists
-- Avoid creating objects/functions in render methods
-- Consider virtualization for large card lists
 
-## Testing Strategy
-- Unit tests for game logic (moves, card effects)
-- Integration tests for boardgame.io game flow
-- Component tests for React components
-- AI behavior tests
-- Game rule validation tests
 
-## Security Considerations
-- Client-side only means no server validation
-- Prevent cheating through UI manipulation
-- Validate all moves in game logic
-- Don't expose sensitive game state to players
-
-## Deployment
-- Static site deployment (Netlify, Vercel, or GitHub Pages)
-- Build optimization for production
-- Asset optimization for faster loading
+## Testing & Feedback
+- **No formal testing required** - testing is done by playing the game
+- End user (developer) will test by playing and provide feedback to AI
+- Focus on getting features working, bugs can be fixed iteratively
 
 ## Future Considerations
 - **Custom Card Art**: Design will be replaced with custom artwork later
@@ -146,12 +133,12 @@ src/
 - **Mobile App**: React Native version possibility
 
 ## Development Priorities
-1. **Phase 1**: Basic game engine with boardgame.io
-2. **Phase 2**: Core card mechanics and rules
-3. **Phase 3**: Simple AI opponents
-4. **Phase 4**: UI polish and user experience
-5. **Phase 5**: Advanced AI and game balance
-6. **Phase 6**: Custom graphics and animations
+1. **Phase 1**: Get a basic playable game working
+2. **Phase 2**: Add all card types and basic mechanics
+3. **Phase 3**: Simple AI that makes random valid moves
+4. **Phase 4**: Basic UI that's functional (doesn't need to be pretty)
+5. **Phase 5**: Improve AI to make smarter decisions
+6. **Phase 6**: Polish only if requested
 
 ## Common Patterns to Use
 
@@ -203,10 +190,13 @@ const cardType = {
 ```
 
 ## Notes for AI Assistant
+- **Hobby project mentality**: Focus on getting things working quickly
+- **No production concerns**: Skip best practices if they slow down development
 - Always use JavaScript, never TypeScript
-- Prefer functional programming patterns
-- Keep boardgame.io game logic separate from React components
-- Focus on getting basic functionality working before adding complexity
+- Prefer simple solutions over complex architectures
+- Build incrementally - get something playable ASAP
 - Use placeholder content for graphics and styling initially
-- Prioritize game mechanics over visual polish in early phases
-- Consider the iterative development approach - build incrementally
+- **Testing approach**: User will test by playing the game and report issues
+- Don't worry about edge cases unless they break core gameplay
+- Prioritize game mechanics over visual polish
+- When in doubt, choose the faster/simpler solution
