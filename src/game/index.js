@@ -253,62 +253,147 @@ const ExplodingKittensGame = {
   },
 
   /**
-   * Turn configuration
+   * Turn configuration with proper boardgame.io integration
    */
   turn: {
     order: TurnOrder.DEFAULT,
 
+    // Set move limits for proper turn management
+    minMoves: 0, // Players can end turn without playing cards (by drawing)
+    maxMoves: 10, // Reasonable limit to prevent infinite card playing
+
     /**
-     * Turn begin handler - skip eliminated players
+     * Turn begin handler - skip eliminated players and update game state
      */
     onBegin: ({ G, ctx, events }) => {
       const currentPlayer = G.players[ctx.currentPlayer];
+
+      // Skip eliminated players automatically
       if (currentPlayer && currentPlayer.isEliminated) {
-        // Skip eliminated players automatically
         events.endTurn();
+        return;
       }
 
+      // Update turn tracking
       G.totalTurns++;
+
+      // Clear any previous turn state that shouldn't persist
+      if (G.lastAction) {
+        G.lastAction = null;
+      }
     },
 
     /**
-     * Turn end handler - cleanup only
+     * Turn end handler - cleanup and validation
      */
-    onEnd: () => {
-      // No auto-placement needed here anymore
-      // CPU placement is handled directly in drawCard move
-      // Human placement is handled by explicit placeExplodingKitten move
+    onEnd: ({ G }) => {
+      // Ensure hand sizes are accurate after turn
+      Object.values(G.players).forEach(player => {
+        player.handSize = player.hand.length;
+      });
+
+      // Clean up any temporary state that shouldn't persist between turns
+      // Note: pendingExplodingKitten is intentionally preserved until placement
     }
   },
 
   /**
-   * Game phases configuration - simplified for Phase 1
+   * Game phases configuration with setup and playing phases
    */
   phases: {
-    // Main playing phase - no separate setup needed
-    playing: {
+    // Setup phase for game initialization and validation
+    setup: {
       start: true,
+
+      // Setup phase configuration
       turn: {
-        order: TurnOrder.DEFAULT
+        order: TurnOrder.DEFAULT,
+        minMoves: 0,
+        maxMoves: 0 // No moves allowed during setup
+      },
+
+      // Setup moves (none needed for Phase 1, but structure for future)
+      moves: {},
+
+      // Automatically transition to playing phase
+      next: 'playing',
+
+      // End setup phase immediately after initialization
+      endIf: ({ G }) => {
+        // Setup is complete when all players have proper hands and deck is ready
+        const allPlayersReady = Object.values(G.players).every(player =>
+          player.hand.length === 8 && !player.isEliminated
+        );
+        const deckReady = G.deck.length === 24; // 56 total - 32 dealt = 24 remaining
+
+        return allPlayersReady && deckReady;
+      }
+    },
+
+    // Main playing phase where the actual game takes place
+    playing: {
+      // Turn configuration for playing phase
+      turn: {
+        order: TurnOrder.DEFAULT,
+        minMoves: 0, // Players can end turn by just drawing
+        maxMoves: 10 // Prevent infinite card playing
+      },
+
+      // All moves are available during playing phase
+      moves: {
+        playCard: true,
+        drawCard: true,
+        placeExplodingKitten: true
+      },
+
+      // Playing phase continues until game end
+      endIf: () => {
+        // Game ends when endIf returns a winner or draw
+        return null;
       }
     }
   },  /**
-   * Game end conditions
+   * Game end conditions - handles single winner and draw scenarios
    */
-  endIf: ({ G }) => {
+  endIf: ({ G, ctx }) => {
     const alivePlayers = getAlivePlayers(G);
 
-    // Single winner condition
+    // Single winner condition - last player standing
     if (alivePlayers.length === 1) {
-      return { winner: alivePlayers[0].id };
+      return {
+        winner: alivePlayers[0].id,
+        winnerName: alivePlayers[0].name,
+        reason: 'Last player remaining'
+      };
     }
 
-    // Draw condition - deck empty and no exploding kittens remain
+    // No players remaining (all exploded) - this shouldn't happen but handle it
+    if (alivePlayers.length === 0) {
+      return {
+        draw: true,
+        reason: 'All players eliminated'
+      };
+    }
+
+    // Draw condition - deck empty and no exploding kittens remain in deck
     if (G.deck.length === 0) {
       const explodingKittensInDeck = G.deck.filter(card => isExplodingKitten(card));
       if (explodingKittensInDeck.length === 0) {
-        return { draw: true, winners: alivePlayers.map(p => p.id) };
+        return {
+          draw: true,
+          winners: alivePlayers.map(p => ({ id: p.id, name: p.name })),
+          reason: 'Deck empty with no exploding kittens remaining'
+        };
       }
+    }
+
+    // Game continues - check for stalled games (safety mechanism)
+    if (ctx.turn > 1000) { // Reasonable upper limit for turns
+      return {
+        draw: true,
+        winners: alivePlayers.map(p => ({ id: p.id, name: p.name })),
+        reason: 'Game reached maximum turn limit'
+      };
     }
 
     // Game continues
@@ -352,15 +437,19 @@ const ExplodingKittensGame = {
     }
   },
 
-  // Hide secret information from players
+  // Hide secret information from players using PlayerView.STRIP_SECRETS
   playerView: PlayerView.STRIP_SECRETS,
 
-  // Player configuration
+  // Player configuration for Phase 1 - exactly 4 players required
   minPlayers: 4,
   maxPlayers: 4,
 
-  // Deterministic randomness for consistent behavior
-  seed: 'phase1-development'
+  // Deterministic randomness for consistent testing and development
+  seed: 'phase1-development',
+
+  // Game metadata
+  displayName: 'Exploding Kittens (Phase 1)',
+  description: 'Core foundation with basic cards: Regular, Exploding Kittens, and Defuse cards'
 };
 
 export default ExplodingKittensGame;
