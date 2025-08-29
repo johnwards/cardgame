@@ -7,7 +7,7 @@
  * Game supports exactly 4 players: 1 human player and 3 CPU players.
  */
 
-import { INVALID_MOVE, TurnOrder, PlayerView } from 'boardgame.io/dist/esm/core.js';
+import { INVALID_MOVE, TurnOrder, PlayerView } from 'boardgame.io/core';
 import { setupGameDeck, CARD_TYPES, isExplodingKitten, isDefuseCard, findCardOfType } from '../constants/cards.js';
 
 /**
@@ -190,23 +190,31 @@ const ExplodingKittensGame = {
           const explodingKitten = player.hand.splice(kittenIndex, 1)[0];
           player.handSize = player.hand.length;
 
-          // Store the exploding kitten for placement (will be implemented in Phase 2)
+          // Store the exploding kitten for placement - awaiting player choice
           G.secret.pendingExplodingKitten = explodingKitten;
           G.lastAction = `${player.name} defused an Exploding Kitten!`;
 
-          // For now, automatically place it back randomly in deck
-          const randomPosition = Math.floor(Math.random() * (G.deck.length + 1));
-          G.deck.splice(randomPosition, 0, explodingKitten);
-          G.secret.explodingKittenPositions.push(randomPosition);
+          // For CPU players: auto-place and end turn
+          // For human players: keep turn active until they place the kitten
+          if (player.isCPU) {
+            // CPU auto-places randomly and ends turn
+            const randomPosition = Math.floor(Math.random() * (G.deck.length + 1));
+            G.deck.splice(randomPosition, 0, explodingKitten);
+            G.secret.explodingKittenPositions.push(randomPosition);
+            delete G.secret.pendingExplodingKitten;
+            events.endTurn();
+          }
+          // Human players: turn continues, they must use placeExplodingKitten move
         } else {
           // Player has no defuse card - they are eliminated
           player.isEliminated = true;
           G.lastAction = `${player.name} exploded and was eliminated!`;
+          events.endTurn();
         }
+      } else {
+        // Normal card drawn - turn ends
+        events.endTurn();
       }
-
-      // Drawing a card ALWAYS ends the turn
-      events.endTurn();
     },
 
     /**
@@ -264,44 +272,27 @@ const ExplodingKittensGame = {
     },
 
     /**
-     * Turn end handler - cleanup and validation
+     * Turn end handler - cleanup only
      */
-    onEnd: ({ G }) => {
-      // Clear any temporary state
-      if (G.secret.pendingExplodingKitten) {
-        // Auto-place any pending exploding kittens for CPU players
-        const explodingKitten = G.secret.pendingExplodingKitten;
-        delete G.secret.pendingExplodingKitten;
-
-        const randomPosition = Math.floor(Math.random() * (G.deck.length + 1));
-        G.deck.splice(randomPosition, 0, explodingKitten);
-        G.secret.explodingKittenPositions.push(randomPosition);
-      }
+    onEnd: () => {
+      // No auto-placement needed here anymore
+      // CPU placement is handled directly in drawCard move
+      // Human placement is handled by explicit placeExplodingKitten move
     }
   },
 
   /**
-   * Game phases configuration
+   * Game phases configuration - simplified for Phase 1
    */
   phases: {
-    // Setup phase for game initialization
-    setup: {
-      start: true,
-      next: 'playing',
-      turn: {
-        activePlayers: { all: 'setup' }
-      }
-    },
-
-    // Main playing phase
+    // Main playing phase - no separate setup needed
     playing: {
+      start: true,
       turn: {
         order: TurnOrder.DEFAULT
       }
     }
-  },
-
-  /**
+  },  /**
    * Game end conditions
    */
   endIf: ({ G }) => {
@@ -343,6 +334,10 @@ const ExplodingKittensGame = {
         return moves;
       }
 
+      // CPU players cannot have pending exploding kittens since they auto-place immediately
+      // Human players with pending kittens get moves through UI (not AI enumeration)
+      // Only enumerate normal moves for CPU players
+
       // For Phase 1, AI can play any card in hand
       player.hand.forEach((card, index) => {
         moves.push({ move: 'playCard', args: [index] });
@@ -351,15 +346,6 @@ const ExplodingKittensGame = {
       // AI can always try to draw a card (if deck not empty)
       if (G.deck.length > 0) {
         moves.push({ move: 'drawCard', args: [] });
-      }
-
-      // Handle exploding kitten placement if needed
-      if (G.secret.pendingExplodingKitten) {
-        // AI places kitten randomly in deck
-        const positions = [0, Math.floor(G.deck.length / 2), G.deck.length];
-        positions.forEach(pos => {
-          moves.push({ move: 'placeExplodingKitten', args: [pos] });
-        });
       }
 
       return moves;
