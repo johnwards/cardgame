@@ -147,8 +147,36 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
               canDrawCard={!ctx.gameover}
               moves={moves}
               deckCount={G.deck?.length || 0}
-              hasPendingExplodingKitten={false}
+              hasPendingExplodingKitten={G.pendingExplodingKitten && G.pendingPlayer === playerID}
             />
+
+            {/* Exploding Kitten Placement Interface */}
+            {G.pendingExplodingKitten && G.pendingPlayer === playerID && (
+              <div className="bg-red-600/90 backdrop-blur-sm rounded-lg p-6 text-white">
+                <h3 className="text-xl font-bold mb-4 text-center">💥 Place Exploding Kitten 💥</h3>
+                <p className="text-center mb-4">You defused an Exploding Kitten! Choose where to place it back in the deck:</p>
+                <div className="flex flex-wrap gap-2 justify-center">
+                  <button
+                    onClick={() => moves.placeExplodingKitten(0)}
+                    className="bg-white text-red-600 font-bold py-2 px-4 rounded hover:bg-gray-100 transition-colors"
+                  >
+                    Top of Deck
+                  </button>
+                  <button
+                    onClick={() => moves.placeExplodingKitten(Math.floor(G.deck.length / 2))}
+                    className="bg-white text-red-600 font-bold py-2 px-4 rounded hover:bg-gray-100 transition-colors"
+                  >
+                    Middle of Deck
+                  </button>
+                  <button
+                    onClick={() => moves.placeExplodingKitten(G.deck.length)}
+                    className="bg-white text-red-600 font-bold py-2 px-4 rounded hover:bg-gray-100 transition-colors"
+                  >
+                    Bottom of Deck
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

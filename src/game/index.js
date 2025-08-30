@@ -1,9 +1,11 @@
 /**
- * Exploding Kittens Game - Phase A Implementation
+ * Exploding Kittens Game - Phase B Implementation
  * 
  * Following boardgame.io tutorial patterns exactly.
- * Phase A.1: Expanded to 4-player game structure (1 human + 3 CPU)
- * Phase A.2: Implemented proper card system with correct deck composition
+ * Phase A.1: Expanded to 4-player game structure (1 human + 3 CPU) ✅
+ * Phase A.2: Implemented proper card system with correct deck composition ✅
+ * Phase B.1: Added basic card playing move (playCard) ✅
+ * Phase B.2: Implemented exploding kitten detection and defuse mechanics ✅
  */
 
 import { INVALID_MOVE } from 'boardgame.io/core';
@@ -12,7 +14,7 @@ import { setupGameDeck, CARD_TYPES } from '../constants/cards.js';
 console.log('Game file loading...');
 
 const ExplodingKittensGame = {
-  name: 'exploding-kittens-phase-a',
+  name: 'exploding-kittens-phase-b',
 
   setup: ({ ctx, random }) => {
     console.log('Phase A Setup called with numPlayers:', ctx.numPlayers);
@@ -38,19 +40,51 @@ const ExplodingKittensGame = {
     const gameState = {
       players,
       deck: finalDeck, // Remaining deck with 2 defuse + 3 exploding + 19 regular
-      discardPile: []
+      discardPile: [],
+      pendingExplodingKitten: null, // For defused exploding kittens awaiting placement
+      pendingPlayer: null // Player who needs to place the exploding kitten
     };
 
-    console.log('Phase A Setup complete:');
+    console.log('Phase B Setup complete:');
     console.log('- Players:', numPlayers);
     console.log('- Deck remaining:', finalDeck.length);
     console.log('- Each player starts with 8 cards (1 defuse + 7 regular)');
+    console.log('- Phase B features: playCard move, exploding kitten detection, player elimination');
 
     return gameState;
   },
 
   moves: {
-    drawCard: ({ G, playerID }) => {
+    playCard: ({ G, playerID }, cardIndex) => {
+      console.log('=== PLAYCARD MOVE CALLED ===');
+      console.log('playerID:', playerID, 'cardIndex:', cardIndex);
+
+      // Validate card index
+      if (cardIndex < 0 || cardIndex >= G.players[playerID].hand.length) {
+        console.log('Invalid card index');
+        return INVALID_MOVE;
+      }
+
+      const card = G.players[playerID].hand[cardIndex];
+      console.log('Attempting to play card:', card.name, 'type:', card.type);
+
+      // Only allow regular cards for Phase B.1
+      if (card.type !== CARD_TYPES.REGULAR) {
+        console.log('Cannot play non-regular card in Phase B.1');
+        return INVALID_MOVE;
+      }
+
+      // Move card from hand to discard pile
+      G.players[playerID].hand.splice(cardIndex, 1);
+      G.discardPile.push(card);
+
+      console.log('Card played successfully, discard pile now has', G.discardPile.length, 'cards');
+      console.log('=== PLAYCARD COMPLETE ===');
+      
+      // Don't end turn - allow multiple card plays
+    },
+
+    drawCard: ({ G, playerID, events }) => {
       console.log('=== DRAWCARD MOVE CALLED ===');
       console.log('playerID:', playerID);
 
@@ -60,16 +94,131 @@ const ExplodingKittensGame = {
       }
 
       const card = G.deck.pop();
-      G.players[playerID].hand.push(card);
+      console.log('Drew card:', card.name, 'type:', card.type);
 
-      console.log('Drew card:', card.name);
+      // Check if it's an exploding kitten
+      if (card.type === CARD_TYPES.EXPLODING) {
+        console.log('EXPLODING KITTEN DRAWN!');
+        
+        // Check for defuse card
+        const defuseIndex = G.players[playerID].hand.findIndex(
+          c => c.type === CARD_TYPES.DEFUSE
+        );
+        
+        if (defuseIndex !== -1) {
+          console.log('Player has defuse card at index:', defuseIndex);
+          
+          // Player has defuse - remove it and discard it
+          const defuseCard = G.players[playerID].hand.splice(defuseIndex, 1)[0];
+          G.discardPile.push(defuseCard);
+          
+          // Set state for exploding kitten placement
+          G.pendingExplodingKitten = card;
+          G.pendingPlayer = playerID;
+          
+          console.log('Defuse used, awaiting exploding kitten placement');
+          
+          // Don't end turn - wait for placement
+          return;
+        } else {
+          console.log('Player has no defuse card - ELIMINATED!');
+          
+          // Player has no defuse - eliminate them
+          G.players[playerID].isEliminated = true;
+          
+          // Don't add exploding kitten to hand - it exploded!
+          
+          // Check win condition
+          const alivePlayers = Object.values(G.players).filter(p => !p.isEliminated);
+          console.log('Players remaining alive:', alivePlayers.length);
+          
+          if (alivePlayers.length === 1) {
+            console.log('Game over - single winner!');
+            // Game will end via endIf condition
+          }
+          
+          // End turn after elimination
+          console.log('Ending turn after player elimination');
+          events.endTurn();
+          return;
+        }
+      } else {
+        // Regular card - add to hand
+        G.players[playerID].hand.push(card);
+        console.log('Regular card added to hand');
+      }
+
+      console.log('Drawing card ends turn - passing to next player');
+      events.endTurn();
       console.log('=== DRAWCARD COMPLETE ===');
+    },
+
+    placeExplodingKitten: ({ G, playerID, events }, position) => {
+      console.log('=== PLACE EXPLODING KITTEN MOVE CALLED ===');
+      console.log('playerID:', playerID, 'position:', position);
+      
+      if (!G.pendingExplodingKitten || G.pendingPlayer !== playerID) {
+        console.log('No pending exploding kitten or wrong player');
+        return INVALID_MOVE;
+      }
+      
+      // Validate position (0 = top, deck.length = bottom)
+      if (position < 0 || position > G.deck.length) {
+        console.log('Invalid position:', position, 'deck length:', G.deck.length);
+        return INVALID_MOVE;
+      }
+      
+      // Insert at specified position
+      G.deck.splice(position, 0, G.pendingExplodingKitten);
+      
+      console.log('Exploding kitten placed at position:', position);
+      
+      // Clear pending state
+      G.pendingExplodingKitten = null;
+      G.pendingPlayer = null;
+      
+      console.log('Exploding kitten placement ends turn - passing to next player');
+      events.endTurn();
+      console.log('=== PLACE EXPLODING KITTEN COMPLETE ===');
     }
   },
 
   turn: {
-    minMoves: 1,
-    maxMoves: 1
+    // No minMoves or maxMoves - turns end explicitly via events.endTurn()
+    // Players can play multiple cards, but drawing always ends the turn
+    
+    onBegin: ({ G, ctx, events }) => {
+      // Skip eliminated players
+      let currentPlayer = parseInt(ctx.currentPlayer);
+      if (G.players[currentPlayer]?.isEliminated) {
+        console.log('Skipping eliminated player:', currentPlayer);
+        events.endTurn();
+      }
+    }
+  },
+
+  endIf: ({ G }) => {
+    const alivePlayers = Object.values(G.players).filter(p => !p.isEliminated);
+    
+    if (alivePlayers.length === 1) {
+      console.log('Game over - single winner:', alivePlayers[0].name);
+      return {
+        winner: alivePlayers[0].id,
+        winnerName: alivePlayers[0].name,
+        reason: "Last player standing"
+      };
+    }
+    
+    if (G.deck.length === 0) {
+      console.log('Game over - deck exhausted');
+      return {
+        winner: alivePlayers.map(p => p.id),
+        winnerName: "All remaining players",
+        reason: "Deck exhausted"
+      };
+    }
+    
+    return false;
   }
 };
 

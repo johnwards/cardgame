@@ -28,7 +28,7 @@ const PlayerHand = ({
   // Handle card play with validation
   const handleCardPlay = (cardIndex) => {
     console.log('handleCardPlay called:', cardIndex);
-    if (canPlayCards && moves.playCard) {
+    if (cardsPlayable && moves.playCard) {
       console.log('Calling moves.playCard');
       moves.playCard(cardIndex);
     } else {
@@ -159,54 +159,68 @@ const PlayerHand = ({
       {/* Player Hand Cards */}
       {player.hand && player.hand.length > 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-          {player.hand.map((card, index) => (
-            <div
-              key={card.id}
-              className={`
-                bg-white text-gray-800 rounded-lg p-3 text-center transition-all duration-200 transform
-                ${cardsPlayable
-                  ? 'cursor-pointer hover:shadow-xl hover:scale-105 hover:bg-yellow-50 hover:-translate-y-1'
-                  : 'cursor-not-allowed opacity-75'
-                }
-                ${card.type === 'exploding'
-                  ? 'border-2 border-red-500 bg-red-50'
-                  : card.type === 'defuse'
-                    ? 'border-2 border-green-500 bg-green-50'
-                    : 'border border-gray-200'
-                }
-              `}
-              onClick={() => cardsPlayable && handleCardPlay(index)}
-            >
-              {/* Card Name */}
-              <div className="font-bold text-xs mb-1 leading-tight">
-                {card.name}
+          {player.hand.map((card, index) => {
+            // Check if this specific card can be played
+            const isRegularCard = card.type === 'regular';
+            const canPlayThisCard = cardsPlayable && isRegularCard;
+            
+            return (
+              <div
+                key={card.id}
+                className={`
+                  bg-white text-gray-800 rounded-lg p-3 text-center transition-all duration-200 transform
+                  ${canPlayThisCard
+                    ? 'cursor-pointer hover:shadow-xl hover:scale-105 hover:bg-yellow-50 hover:-translate-y-1'
+                    : 'cursor-not-allowed opacity-75'
+                  }
+                  ${card.type === 'exploding'
+                    ? 'border-2 border-red-500 bg-red-50'
+                    : card.type === 'defuse'
+                      ? 'border-2 border-green-500 bg-green-50'
+                      : 'border border-gray-200'
+                  }
+                `}
+                onClick={() => canPlayThisCard && handleCardPlay(index)}
+              >
+                {/* Card Emoji */}
+                <div className="text-2xl mb-1">{card.emoji}</div>
+
+                {/* Card Name */}
+                <div className="font-bold text-xs mb-1 leading-tight">
+                  {card.name}
+                </div>
+
+                {/* Card Type */}
+                <div className="text-xs opacity-70 leading-tight">
+                  {card.type}
+                </div>
+
+                {/* Card Type Indicator */}
+                {card.type === 'exploding' && (
+                  <div className="mt-1 text-xs font-bold text-red-600">
+                    DANGER!
+                  </div>
+                )}
+                {card.type === 'defuse' && (
+                  <div className="mt-1 text-xs font-bold text-green-600">
+                    SAFETY
+                  </div>
+                )}
+
+                {/* Interactive State Indicator */}
+                {canPlayThisCard && (
+                  <div className="mt-1 text-xs text-blue-600 opacity-50">
+                    Click to play
+                  </div>
+                )}
+                {cardsPlayable && !isRegularCard && (
+                  <div className="mt-1 text-xs text-gray-500 opacity-50">
+                    Cannot play
+                  </div>
+                )}
               </div>
-
-              {/* Card Type */}
-              <div className="text-xs opacity-70 leading-tight">
-                {card.type}
-              </div>
-
-              {/* Card Type Indicator */}
-              {card.type === 'exploding' && (
-                <div className="mt-1 text-xs font-bold text-red-600">
-                  DANGER!
-                </div>
-              )}
-              {card.type === 'defuse' && (
-                <div className="mt-1 text-xs font-bold text-green-600">
-                  SAFETY
-                </div>
-              )}
-
-              {/* Interactive State Indicator */}
-              {cardsPlayable && (
-                <div className="mt-1 text-xs text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                  Click to play
-                </div>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <div className="text-center py-8 opacity-60">
