@@ -3,10 +3,12 @@
  * 
  * Implements Task 3.1: Core React component integrated with boardgame.io Client
  * Enhanced for Task 3.2: Player Hand and Card Interaction Components
+ * Phase C.2: Enhanced UI for CPU AI behavior and game flow
  * - Receives {G, ctx, moves, playerID, isActive} props from boardgame.io
  * - Displays game state using G.players, G.deck.length, G.discardPile
  * - Shows turn indicator using ctx.currentPlayer and isActive prop
  * - Handles game over display with ctx.gameover.winner information
+ * - Enhanced CPU player status indicators for AI behavior
  * - Uses Tailwind CSS for responsive layout and styling
  * - Integrates PlayerHand and OtherPlayers components for better organization
  */
@@ -16,6 +18,8 @@ import OtherPlayers from './OtherPlayers';
 import GameArea from './GameArea';
 import GameStatus from './GameStatus';
 import ExplodingKittenPlacement from './ExplodingKittenPlacement';
+import { cpuPlayer } from '../utils/cpuPlayer';
+import { useEffect } from 'react';
 
 const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
   // Debug logging to understand the issue
@@ -26,6 +30,26 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
   console.log('G.players keys:', Object.keys(G?.players || {}));
   console.log('moves available:', Object.keys(moves || {}));
   console.log('G.deck length:', G?.deck?.length);
+
+  // Phase C.2: CPU Player Logic - Schedule CPU moves when it's their turn
+  useEffect(() => {
+    const currentPlayerID = parseInt(ctx?.currentPlayer);
+    const currentPlayer = G?.players?.[currentPlayerID];
+    
+    // Check if we need to schedule a CPU move
+    if (currentPlayer?.isCPU && !currentPlayer.isEliminated && !ctx?.gameover) {
+      console.log('Scheduling CPU move for player:', currentPlayerID);
+      
+      // Add some delay for natural feel (1-3 seconds)
+      const delay = 1000 + Math.random() * 2000;
+      cpuPlayer.scheduleCPUMove(G, ctx, moves, currentPlayerID, delay);
+    }
+    
+    // Cleanup function
+    return () => {
+      // cpuPlayer.cleanup() - don't cleanup all, just let moves complete
+    };
+  }, [ctx, G, moves]); // Re-run when turn changes
 
   // Comprehensive error handling
   if (!G) {
@@ -106,11 +130,32 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 text-white">
               <h2 className="text-2xl font-bold mb-4">Other Players</h2>
               {Object.values(G.players).filter(p => p.id !== parseInt(playerID)).map(player => (
-                <div key={player.id} className="mb-4 p-3 bg-white/10 rounded">
-                  <div className="font-bold">{player.name}</div>
+                <div 
+                  key={player.id} 
+                  className={`mb-4 p-3 rounded transition-all duration-300 ${
+                    ctx.currentPlayer == player.id 
+                      ? 'bg-yellow-500/30 border-2 border-yellow-400' 
+                      : 'bg-white/10'
+                  }`}
+                >
+                  <div className="font-bold flex items-center gap-2">
+                    {player.name}
+                    {player.isCPU && <span className="text-xs bg-blue-500 px-2 py-1 rounded">🤖 CPU</span>}
+                  </div>
                   <div className="text-sm">Cards: {player.hand?.length || 0}</div>
-                  <div className="text-sm">Status: {player.isEliminated ? '💀 Eliminated' : '✅ Alive'}</div>
-                  {ctx.currentPlayer == player.id && <div className="text-sm text-yellow-300">⚡ Current Turn</div>}
+                  <div className="text-sm">
+                    Status: {player.isEliminated ? '💀 Eliminated' : '✅ Alive'}
+                  </div>
+                  {ctx.currentPlayer == player.id && !player.isEliminated && (
+                    <div className="text-sm text-yellow-300 animate-pulse">
+                      {player.isCPU ? '🤖 CPU Thinking...' : '⚡ Current Turn'}
+                    </div>
+                  )}
+                  {G.pendingExplodingKitten && G.pendingPlayer === player.id && (
+                    <div className="text-sm text-orange-300 animate-pulse">
+                      💥 Placing Exploding Kitten...
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -122,11 +167,30 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 text-white text-center">
               <h2 className="text-2xl font-bold mb-4">Game Area</h2>
 
+              {/* Current turn indicator */}
+              <div className="mb-4 p-3 bg-blue-600/50 rounded-lg">
+                <div className="font-bold">Current Turn: {currentPlayer.name}</div>
+                {currentPlayer.isCPU && (
+                  <div className="text-sm animate-pulse">🤖 CPU is deciding...</div>
+                )}
+                {!currentPlayer.isCPU && ctx.currentPlayer === playerID && (
+                  <div className="text-sm text-green-300">✨ Your turn! Play cards or draw.</div>
+                )}
+              </div>
+
               {/* Special status messages */}
               {G.pendingExplodingKitten && G.pendingPlayer === playerID && (
                 <div className="mb-4 p-3 bg-orange-600 rounded-lg">
                   <div className="font-bold">🛡️ DEFUSE USED!</div>
                   <div className="text-sm">You used a defuse card and survived the exploding kitten!</div>
+                  <div className="text-sm">Now choose where to place it back in the deck.</div>
+                </div>
+              )}
+
+              {G.pendingExplodingKitten && G.pendingPlayer !== playerID && (
+                <div className="mb-4 p-3 bg-orange-600/70 rounded-lg">
+                  <div className="font-bold">🛡️ {G.players[G.pendingPlayer]?.name} DEFUSED!</div>
+                  <div className="text-sm">They used a defuse card and are placing the exploding kitten back in the deck...</div>
                 </div>
               )}
 
@@ -135,6 +199,7 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
                 <div className="mb-4 p-3 bg-red-600 rounded-lg">
                   <div className="font-bold">💀 YOU WERE ELIMINATED!</div>
                   <div className="text-sm">You drew an exploding kitten without a defuse card!</div>
+                  <div className="text-xs mt-1">Watch the remaining players battle it out!</div>
                 </div>
               )}
 

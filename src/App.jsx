@@ -1,7 +1,8 @@
 /**
- * App Component - Phase A Implementation
+ * App Component - Phase C Implementation
  * 
- * Phase A.1: Configured for exactly 4 players (1 human + 3 CPU)
+ * Phase A.1: Configured for exactly 4 players (1 human + 3 CPU) ✅
+ * Phase C.2: Added AI configuration for CPU players ✅
  */
 
 import { Client } from 'boardgame.io/react';
@@ -9,7 +10,7 @@ import ExplodingKittensGame from './game';
 import GameBoard from './components/GameBoard';
 import './index.css';
 
-// Phase A client configuration - exactly 4 players
+// Phase C.2: Client configuration - simple setup for AI testing
 const ExplodingKittensClient = Client({
   game: ExplodingKittensGame,
   board: GameBoard,

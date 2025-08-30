@@ -1,11 +1,13 @@
 /**
- * Exploding Kittens Game - Phase B Implementation
+ * Exploding Kittens Game - Phase C Implementation
  * 
  * Following boardgame.io tutorial patterns exactly.
  * Phase A.1: Expanded to 4-player game structure (1 human + 3 CPU) ✅
  * Phase A.2: Implemented proper card system with correct deck composition ✅
  * Phase B.1: Added basic card playing move (playCard) ✅
  * Phase B.2: Implemented exploding kitten detection and defuse mechanics ✅
+ * Phase C.1: Added win condition logic (endIf) ✅
+ * Phase C.2: Implemented basic CPU AI logic (ai.enumerate) ✅
  */
 
 import { INVALID_MOVE } from 'boardgame.io/core';
@@ -14,7 +16,7 @@ import { setupGameDeck, CARD_TYPES } from '../constants/cards.js';
 console.log('Game file loading...');
 
 const ExplodingKittensGame = {
-  name: 'exploding-kittens-phase-b',
+  name: 'exploding-kittens-phase-c',
 
   setup: ({ ctx, random }) => {
     console.log('Phase A Setup called with numPlayers:', ctx.numPlayers);
@@ -45,11 +47,11 @@ const ExplodingKittensGame = {
       pendingPlayer: null // Player who needs to place the exploding kitten
     };
 
-    console.log('Phase B Setup complete:');
+    console.log('Phase C Setup complete:');
     console.log('- Players:', numPlayers);
     console.log('- Deck remaining:', finalDeck.length);
     console.log('- Each player starts with 8 cards (1 defuse + 7 regular)');
-    console.log('- Phase B features: playCard move, exploding kitten detection, player elimination');
+    console.log('- Phase C features: CPU AI logic, complete win conditions, automatic CPU turns');
 
     return gameState;
   },
@@ -256,6 +258,109 @@ const ExplodingKittensGame = {
     }
 
     return false;
+  },
+
+  // Phase C.2: Basic CPU AI Logic
+  ai: {
+    enumerate: ({ G, ctx, playerID }) => {
+      console.log('=== AI ENUMERATE CALLED ===');
+      console.log('AI playerID:', playerID, 'currentPlayer:', ctx.currentPlayer);
+      
+      // Only provide moves for CPU players
+      if (!G.players[playerID]?.isCPU) {
+        console.log('Not a CPU player, no AI moves');
+        return [];
+      }
+
+      // Don't provide moves if it's not this player's turn
+      if (ctx.currentPlayer !== playerID.toString()) {
+        console.log('Not this CPU player\'s turn');
+        return [];
+      }
+
+      // Don't provide moves if player is eliminated
+      if (G.players[playerID]?.isEliminated) {
+        console.log('CPU player is eliminated');
+        return [];
+      }
+
+      const moves = [];
+      console.log('CPU player', playerID, 'is active, generating moves...');
+
+      // Handle pending exploding kitten placement first
+      if (G.pendingExplodingKitten && G.pendingPlayer === playerID) {
+        console.log('CPU needs to place exploding kitten');
+        // CPU strategy: Place randomly in deck (weighted toward bottom for self-preservation)
+        const deckLength = G.deck.length;
+        const positions = [
+          { pos: 0, weight: 1 }, // Top of deck (dangerous)
+          { pos: Math.floor(deckLength / 3), weight: 2 }, // Upper third
+          { pos: Math.floor(deckLength * 2 / 3), weight: 3 }, // Lower third
+          { pos: deckLength, weight: 4 } // Bottom (safest)
+        ];
+        
+        // Weighted random selection
+        const totalWeight = positions.reduce((sum, p) => sum + p.weight, 0);
+        const random = Math.random() * totalWeight;
+        let currentWeight = 0;
+        
+        for (const posData of positions) {
+          currentWeight += posData.weight;
+          if (random <= currentWeight) {
+            console.log('CPU placing exploding kitten at position:', posData.pos);
+            moves.push({ move: 'placeExplodingKitten', args: [posData.pos] });
+            break;
+          }
+        }
+        
+        return moves;
+      }
+
+      // Normal turn decision making
+      const player = G.players[playerID];
+      console.log('CPU player', playerID, 'hand size:', player.hand.length);
+
+      // Enhanced AI strategy:
+      // 1. Check hand composition for better decisions
+      // 2. Play regular cards occasionally (40% chance) 
+      // 3. Keep defuse cards (never play them unless forced)
+      // 4. Always end by drawing a card
+      
+      const regularCards = player.hand.filter(card => card.type === CARD_TYPES.REGULAR);
+      const defuseCards = player.hand.filter(card => card.type === CARD_TYPES.DEFUSE);
+      
+      console.log('CPU', playerID, 'has', regularCards.length, 'regular cards and', defuseCards.length, 'defuse cards');
+      
+      // Higher chance to play card if hand is getting large (risk management)
+      const handSizeBonus = Math.min(player.hand.length * 0.05, 0.2); // Up to 20% bonus
+      const shouldPlayCard = Math.random() < (0.4 + handSizeBonus);
+      
+      if (shouldPlayCard && regularCards.length > 0) {
+        // Find playable regular cards
+        const playableCards = player.hand
+          .map((card, index) => ({ card, index }))
+          .filter(({ card }) => card.type === CARD_TYPES.REGULAR);
+        
+        if (playableCards.length > 0) {
+          // Play a random regular card
+          const randomCard = playableCards[Math.floor(Math.random() * playableCards.length)];
+          console.log('CPU deciding to play card at index:', randomCard.index, 'card:', randomCard.card.name);
+          moves.push({ move: 'playCard', args: [randomCard.index] });
+        }
+      } else {
+        console.log('CPU', playerID, 'decides not to play a card this turn');
+      }
+
+      // Always include draw option (CPU will eventually draw to end turn)
+      if (G.deck.length > 0) {
+        console.log('CPU can draw card');
+        moves.push({ move: 'drawCard', args: [] });
+      }
+
+      console.log('CPU move options generated:', moves.length);
+      console.log('=== AI ENUMERATE COMPLETE ===');
+      return moves;
+    }
   }
 };
 
