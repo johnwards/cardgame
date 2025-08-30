@@ -13,14 +13,19 @@
 
 import PlayerHand from './PlayerHand';
 import OtherPlayers from './OtherPlayers';
+import GameArea from './GameArea';
+import GameStatus from './GameStatus';
+import ExplodingKittenPlacement from './ExplodingKittenPlacement';
 
 const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
   // Debug logging to understand the issue
-  console.log('GameBoard render - playerID:', playerID);
-  console.log('GameBoard render - G.players:', G?.players);
-  console.log('GameBoard render - G.players keys:', Object.keys(G?.players || {}));
-  console.log('GameBoard render - ctx.currentPlayer:', ctx?.currentPlayer);
-  console.log('GameBoard render - ctx.numPlayers:', ctx?.numPlayers);
+  console.log('GameBoard render - SIMPLIFIED DEBUG');
+  console.log('playerID:', playerID);
+  console.log('ctx.currentPlayer:', ctx?.currentPlayer);
+  console.log('isActive:', isActive);
+  console.log('G.players keys:', Object.keys(G?.players || {}));
+  console.log('moves available:', Object.keys(moves || {}));
+  console.log('G.deck length:', G?.deck?.length);
 
   // Comprehensive error handling
   if (!G) {
@@ -48,6 +53,9 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
   const currentPlayer = G.players[ctx.currentPlayer];
   const humanPlayer = G.players[playerID];
 
+  console.log('currentPlayer found:', !!currentPlayer, currentPlayer?.name);
+  console.log('humanPlayer found:', !!humanPlayer, humanPlayer?.name);
+
   if (!currentPlayer) {
     return <div className="p-8 text-red-600">Error: currentPlayer is null or undefined</div>;
   }
@@ -55,57 +63,6 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
   if (!humanPlayer) {
     return <div className="p-8 text-red-600">Error: humanPlayer is null or undefined</div>;
   }
-
-  // Check if human player has pending exploding kitten placement
-  const hasPendingExplodingKitten = G.secret?.pendingExplodingKitten &&
-    G.secret?.pendingExplodingKittenPlayer === playerID;
-
-  // No longer need helper functions - moved to component-specific files
-
-  // Handle exploding kitten placement
-  const handleExplodingKittenPlacement = (position) => {
-    if (moves.placeExplodingKitten && hasPendingExplodingKitten) {
-      moves.placeExplodingKitten(position);
-    }
-  };
-
-  // Render exploding kitten placement modal
-  const renderPlacementModal = () => {
-    if (!hasPendingExplodingKitten) return null;
-
-    return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 max-w-md mx-4">
-          <h3 className="text-xl font-bold text-gray-800 mb-4">
-            💥 Place Exploding Kitten Back in Deck
-          </h3>
-          <p className="text-gray-600 mb-6">
-            You defused the Exploding Kitten! Choose where to place it back in the deck:
-          </p>
-          <div className="space-y-3">
-            <button
-              onClick={() => handleExplodingKittenPlacement(0)}
-              className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded"
-            >
-              Top of Deck (Most Dangerous)
-            </button>
-            <button
-              onClick={() => handleExplodingKittenPlacement(Math.floor(G.deck.length / 2))}
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded"
-            >
-              Middle of Deck
-            </button>
-            <button
-              onClick={() => handleExplodingKittenPlacement(G.deck.length)}
-              className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-4 rounded"
-            >
-              Bottom of Deck (Safest)
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-800 to-blue-900 p-4">
@@ -115,9 +72,10 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
           <h1 className="text-4xl font-bold text-center mb-2">💥 Exploding Kittens 💥</h1>
           <div className="text-center">
             <span className="text-lg">Turn {ctx.turn}</span>
-            {G.lastAction && (
-              <span className="ml-4 text-yellow-300">• {G.lastAction}</span>
-            )}
+            <div className="text-sm mt-2">Current Player: {currentPlayer.name}</div>
+            <div className="text-sm">Your PlayerID: {playerID}</div>
+            <div className="text-sm">Is Your Turn: {ctx.currentPlayer === playerID ? 'YES' : 'NO'}</div>
+            <div className="text-sm">Is Active: {isActive ? 'YES' : 'NO'}</div>
           </div>
         </div>
 
@@ -133,17 +91,6 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
                 <p className="text-lg opacity-90">{ctx.gameover.reason}</p>
               </div>
             )}
-            {ctx.gameover.draw && (
-              <div>
-                <p className="text-xl mb-2">It's a Draw!</p>
-                <p className="text-lg opacity-90">{ctx.gameover.reason}</p>
-                {ctx.gameover.winners && (
-                  <p className="mt-2">
-                    Survivors: {ctx.gameover.winners.map(w => w.name).join(', ')}
-                  </p>
-                )}
-              </div>
-            )}
             <button
               onClick={() => window.location.reload()}
               className="mt-4 bg-white text-purple-600 font-bold py-2 px-6 rounded-lg hover:bg-gray-100 transition-colors"
@@ -156,150 +103,103 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Other Players Panel */}
           <div className="lg:col-span-1">
-            <OtherPlayers
-              players={G.players}
-              currentPlayer={ctx.currentPlayer}
-              playerID={playerID}
-            />
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 text-white">
+              <h2 className="text-2xl font-bold mb-4">Other Players</h2>
+              {Object.values(G.players).filter(p => p.id !== parseInt(playerID)).map(player => (
+                <div key={player.id} className="mb-4 p-3 bg-white/10 rounded">
+                  <div className="font-bold">{player.name}</div>
+                  <div className="text-sm">Cards: {player.hand?.length || 0}</div>
+                  <div className="text-sm">Status: {player.isEliminated ? '💀 Eliminated' : '✅ Alive'}</div>
+                  {ctx.currentPlayer == player.id && <div className="text-sm text-yellow-300">⚡ Current Turn</div>}
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* Game Area */}
-          <div className="lg:col-span-2">
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 text-white">
-              <div className="grid grid-cols-2 gap-6 mb-6">
-                {/* Draw Pile */}
+          {/* Game Area and Status */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Game Area */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 text-white text-center">
+              <h2 className="text-2xl font-bold mb-4">Game Area</h2>
+              <div className="flex justify-center gap-8">
                 <div className="text-center">
-                  <h3 className="text-xl font-bold mb-4">Draw Pile</h3>
-                  <div className="bg-blue-600 rounded-lg p-6 min-h-32 flex items-center justify-center">
-                    <div>
-                      <div className="text-4xl mb-2">🎴</div>
-                      <div className="font-bold text-lg">{G.deck?.length || 0} cards</div>
-                    </div>
-                  </div>
+                  <div className="text-4xl mb-2">🎴</div>
+                  <div className="font-bold">Draw Pile</div>
+                  <div className="text-sm">{G.deck?.length || 0} cards</div>
                 </div>
-
-                {/* Discard Pile */}
                 <div className="text-center">
-                  <h3 className="text-xl font-bold mb-4">Discard Pile</h3>
-                  <div className="bg-gray-600 rounded-lg p-6 min-h-32 flex items-center justify-center">
-                    <div>
-                      {G.discardPile?.length > 0 ? (
-                        <>
-                          <div className="text-4xl mb-2">
-                            {G.discardPile[G.discardPile.length - 1].emoji}
-                          </div>
-                          <div className="font-bold text-sm">
-                            {G.discardPile[G.discardPile.length - 1].name}
-                          </div>
-                          <div className="text-xs opacity-80">
-                            {G.discardPile.length} cards
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="text-4xl mb-2 opacity-50">🗑️</div>
-                          <div className="font-bold text-sm opacity-50">Empty</div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Current Turn Indicator */}
-              <div className="text-center mb-6">
-                <div className={`inline-block px-6 py-3 rounded-full font-bold text-lg ${ctx.currentPlayer === playerID
-                  ? 'bg-green-500 text-white'
-                  : 'bg-gray-500 text-white'
-                  }`}>
-                  {ctx.currentPlayer === playerID ? "Your Turn!" : `${currentPlayer.name}'s Turn`}
-                  {isActive && ctx.currentPlayer === playerID && (
-                    <span className="ml-2 animate-pulse">⚡</span>
+                  <div className="text-4xl mb-2">🗂️</div>
+                  <div className="font-bold">Discard Pile</div>
+                  <div className="text-sm">{G.discardPile?.length || 0} cards</div>
+                  {G.discardPile?.length > 0 && (
+                    <div className="text-xs mt-1">Top: {G.discardPile[G.discardPile.length - 1]?.name}</div>
                   )}
                 </div>
               </div>
-
-              {/* Pending Exploding Kitten Message */}
-              {hasPendingExplodingKitten && (
-                <div className="text-center">
-                  <div className="bg-red-500 text-white p-4 rounded-lg">
-                    <p className="font-bold">💥 You drew an Exploding Kitten!</p>
-                    <p>You defused it! Now choose where to place it back in the deck.</p>
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* Enhanced Player Hand Component */}
-            <div className="mt-6">
-              <PlayerHand
-                player={humanPlayer}
-                isActive={isActive}
-                isCurrentPlayer={ctx.currentPlayer === playerID}
-                canPlayCards={!ctx.gameover && !hasPendingExplodingKitten}
-                canDrawCard={!ctx.gameover && !hasPendingExplodingKitten}
-                moves={moves}
-                deckCount={G.deck?.length || 0}
-                hasPendingExplodingKitten={hasPendingExplodingKitten}
-              />
-            </div>
+            <PlayerHand
+              player={humanPlayer}
+              isActive={isActive}
+              isCurrentPlayer={ctx.currentPlayer === playerID}
+              canPlayCards={!ctx.gameover}
+              canDrawCard={!ctx.gameover}
+              moves={moves}
+              deckCount={G.deck?.length || 0}
+              hasPendingExplodingKitten={false}
+            />
           </div>
         </div>
 
         {/* Debug Panel (Development Mode) */}
-        {import.meta.env.DEV && (
-          <details className="mt-6 bg-black/20 backdrop-blur-sm rounded-lg p-4 text-white">
-            <summary className="cursor-pointer text-yellow-300 font-bold">
-              🛠️ Debug Information (Click to expand)
-            </summary>
-            <div className="mt-4 space-y-4 text-xs">
-              <div>
-                <strong>Game State (G):</strong>
-                <pre className="bg-black/30 p-2 rounded mt-1 overflow-auto max-h-32">
-                  {JSON.stringify({
-                    deckLength: G.deck?.length,
-                    discardPileLength: G.discardPile?.length,
-                    players: Object.fromEntries(
-                      Object.entries(G.players || {}).map(([id, player]) => [
-                        id,
-                        {
-                          name: player.name,
-                          handSize: player.hand?.length,
-                          isEliminated: player.isEliminated,
-                          isCPU: player.isCPU
-                        }
-                      ])
-                    ),
-                    hasPendingExplodingKitten: !!G.secret?.pendingExplodingKitten
-                  }, null, 2)}
-                </pre>
-              </div>
-              <div>
-                <strong>Context (ctx):</strong>
-                <pre className="bg-black/30 p-2 rounded mt-1 overflow-auto max-h-32">
-                  {JSON.stringify({
-                    turn: ctx.turn,
-                    currentPlayer: ctx.currentPlayer,
-                    phase: ctx.phase,
-                    gameover: ctx.gameover,
-                    playerID,
-                    isActive
-                  }, null, 2)}
-                </pre>
-              </div>
-              <div>
-                <strong>Available Moves:</strong>
-                <pre className="bg-black/30 p-2 rounded mt-1">
-                  {JSON.stringify(Object.keys(moves || {}), null, 2)}
-                </pre>
-              </div>
+        <details className="mt-6 bg-black/20 backdrop-blur-sm rounded-lg p-4 text-white">
+          <summary className="cursor-pointer text-yellow-300 font-bold">
+            🛠️ Debug Information (Click to expand)
+          </summary>
+          <div className="mt-4 space-y-4 text-xs">
+            <div>
+              <strong>Game State (G):</strong>
+              <pre className="bg-black/30 p-2 rounded mt-1 overflow-auto max-h-32">
+                {JSON.stringify({
+                  deckLength: G.deck?.length,
+                  discardPileLength: G.discardPile?.length,
+                  players: Object.fromEntries(
+                    Object.entries(G.players || {}).map(([id, player]) => [
+                      id,
+                      {
+                        name: player.name,
+                        handSize: player.hand?.length,
+                        isEliminated: player.isEliminated,
+                        isCPU: player.isCPU
+                      }
+                    ])
+                  )
+                }, null, 2)}
+              </pre>
             </div>
-          </details>
-        )}
+            <div>
+              <strong>Context (ctx):</strong>
+              <pre className="bg-black/30 p-2 rounded mt-1 overflow-auto max-h-32">
+                {JSON.stringify({
+                  turn: ctx.turn,
+                  currentPlayer: ctx.currentPlayer,
+                  phase: ctx.phase,
+                  gameover: ctx.gameover,
+                  playerID,
+                  isActive
+                }, null, 2)}
+              </pre>
+            </div>
+            <div>
+              <strong>Available Moves:</strong>
+              <pre className="bg-black/30 p-2 rounded mt-1">
+                {JSON.stringify(Object.keys(moves || {}), null, 2)}
+              </pre>
+            </div>
+          </div>
+        </details>
       </div>
-
-      {/* Exploding Kitten Placement Modal */}
-      {renderPlacementModal()}
     </div>
   );
 };

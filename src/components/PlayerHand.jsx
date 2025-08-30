@@ -1,11 +1,7 @@
 /**
- * PlayerHand Component - Interactive player hand with card play functionality
+ * SIMPLIFIED PlayerHand Component for debugging
  * 
- * Implements Task 3.2: Player Hand and Card Interaction Components
- * - Interactive player hand showing human player's complete hand with card details
- * - Card click handlers calling moves.playCard(cardIndex) through props
- * - Draw button calling moves.drawCard() with proper enabling/disabling
- * - Tailwind CSS for card styling, hover effects, and responsive design
+ * Minimal version to test basic functionality
  */
 
 const PlayerHand = ({
@@ -18,24 +14,63 @@ const PlayerHand = ({
   deckCount,
   hasPendingExplodingKitten = false
 }) => {
+  console.log('PlayerHand render:', {
+    player: player?.name,
+    isActive,
+    isCurrentPlayer,
+    canPlayCards,
+    canDrawCard,
+    deckCount,
+    hasPendingExplodingKitten,
+    movesKeys: Object.keys(moves || {})
+  });
+
   // Handle card play with validation
   const handleCardPlay = (cardIndex) => {
+    console.log('handleCardPlay called:', cardIndex);
     if (canPlayCards && moves.playCard) {
+      console.log('Calling moves.playCard');
       moves.playCard(cardIndex);
+    } else {
+      console.log('Cannot play cards or no playCard move');
     }
   };
 
   // Handle draw card with validation
   const handleDrawCard = () => {
+    console.log('=== HANDLEDRWCARD CLICKED ===');
+    console.log('canDrawCard:', canDrawCard);
+    console.log('moves.drawCard exists:', !!moves.drawCard);
+    console.log('deckCount:', deckCount);
+    console.log('moves object:', moves);
+    console.log('typeof moves.drawCard:', typeof moves.drawCard);
+
     if (canDrawCard && moves.drawCard) {
-      moves.drawCard();
+      console.log('About to call moves.drawCard()');
+      try {
+        const result = moves.drawCard();
+        console.log('moves.drawCard() returned:', result);
+      } catch (error) {
+        console.error('Error calling moves.drawCard():', error);
+      }
+    } else {
+      console.log('Cannot draw card or no drawCard move available');
+      console.log('- canDrawCard:', canDrawCard);
+      console.log('- moves.drawCard:', !!moves.drawCard);
     }
+    console.log('=== HANDLEDRWCARD END ===');
   };
 
   // Determine if actions should be enabled
   const actionsEnabled = isActive && isCurrentPlayer && !hasPendingExplodingKitten;
   const drawEnabled = actionsEnabled && canDrawCard && deckCount > 0;
   const cardsPlayable = actionsEnabled && canPlayCards;
+
+  console.log('PlayerHand state:', {
+    actionsEnabled,
+    drawEnabled,
+    cardsPlayable
+  });
 
   if (!player) {
     return (
@@ -60,6 +95,16 @@ const PlayerHand = ({
             <div className="text-red-400 text-sm font-bold">💀 Eliminated</div>
           )}
         </div>
+      </div>
+
+      {/* Debug Info */}
+      <div className="mb-4 text-xs bg-black/20 p-2 rounded">
+        <div>Current Player: {isCurrentPlayer ? 'YES' : 'NO'}</div>
+        <div>Active: {isActive ? 'YES' : 'NO'}</div>
+        <div>Can Draw: {canDrawCard ? 'YES' : 'NO'}</div>
+        <div>Can Play Cards: {canPlayCards ? 'YES' : 'NO'}</div>
+        <div>Deck Count: {deckCount}</div>
+        <div>Available Moves: {Object.keys(moves || {}).join(', ')}</div>
       </div>
 
       {/* Action Buttons */}
@@ -109,23 +154,6 @@ const PlayerHand = ({
             )}
           </div>
         </div>
-
-        {/* Status Messages */}
-        {hasPendingExplodingKitten && (
-          <div className="mt-3 text-center">
-            <div className="bg-red-500/20 text-red-300 border border-red-500/50 rounded-lg px-4 py-2 text-sm">
-              💥 Place the Exploding Kitten back in the deck first!
-            </div>
-          </div>
-        )}
-
-        {!cardsPlayable && !hasPendingExplodingKitten && isCurrentPlayer && (
-          <div className="mt-3 text-center">
-            <div className="bg-yellow-500/20 text-yellow-300 border border-yellow-500/50 rounded-lg px-4 py-2 text-sm">
-              💡 Play cards or draw to end your turn
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Player Hand Cards */}
@@ -149,19 +177,14 @@ const PlayerHand = ({
               `}
               onClick={() => cardsPlayable && handleCardPlay(index)}
             >
-              {/* Card Emoji */}
-              <div className="text-3xl mb-2 select-none">
-                {card.emoji}
-              </div>
-
               {/* Card Name */}
               <div className="font-bold text-xs mb-1 leading-tight">
                 {card.name}
               </div>
 
-              {/* Card Description */}
+              {/* Card Type */}
               <div className="text-xs opacity-70 leading-tight">
-                {card.description}
+                {card.type}
               </div>
 
               {/* Card Type Indicator */}
