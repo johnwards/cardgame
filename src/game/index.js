@@ -1,69 +1,35 @@
 /**
- * MINIMAL Exploding Kittens Game - Stripped down to basics for debugging
+ * Exploding Kittens Game - Phase A Implementation
  * 
  * Following boardgame.io tutorial patterns exactly.
- * This is the simplest possible version to test drawCard functionality.
+ * Phase A.1: Expanded to 4-player game structure (1 human + 3 CPU)
+ * Phase A.2: Implemented proper card system with correct deck composition
  */
 
 import { INVALID_MOVE } from 'boardgame.io/core';
+import { setupGameDeck, CARD_TYPES } from '../constants/cards.js';
 
 console.log('Game file loading...');
 
-// Simple card creation for testing
-function createCard(id, type, name) {
-  return { id, type, name };
-}
-
-// Create minimal deck for testing
-function createMinimalDeck() {
-  const deck = [];
-
-  // Add some regular cards
-  for (let i = 0; i < 10; i++) {
-    deck.push(createCard(`regular-${i}`, 'regular', `Regular Card ${i}`));
-  }
-
-  // Add defuse cards
-  for (let i = 0; i < 3; i++) {
-    deck.push(createCard(`defuse-${i}`, 'defuse', `Defuse Card ${i}`));
-  }
-
-  // Add exploding kittens
-  for (let i = 0; i < 2; i++) {
-    deck.push(createCard(`exploding-${i}`, 'exploding', `Exploding Kitten ${i}`));
-  }
-
-  console.log('Created deck with', deck.length, 'cards');
-  return deck;
-}
-
 const ExplodingKittensGame = {
-  name: 'exploding-kittens-minimal',
+  name: 'exploding-kittens-phase-a',
 
   setup: ({ ctx, random }) => {
-    console.log('Setup called with numPlayers:', ctx.numPlayers);
+    console.log('Phase A Setup called with numPlayers:', ctx.numPlayers);
 
-    // Create minimal deck
-    const fullDeck = createMinimalDeck();
+    // Force 4 players for Phase A (1 human + 3 CPU)
+    const numPlayers = 4;
 
-    // Shuffle the deck
-    random.Shuffle(fullDeck);
+    // Use proper card system from constants
+    const { dealtCards, finalDeck } = setupGameDeck(numPlayers, random);
 
-    // Create players
+    // Create 4 players (Player 0 = human, Players 1-3 = CPU)
     const players = {};
-    for (let i = 0; i < ctx.numPlayers; i++) {
-      const playerHand = [];
-      // Deal 5 cards to each player
-      for (let j = 0; j < 5; j++) {
-        if (fullDeck.length > 0) {
-          playerHand.push(fullDeck.pop());
-        }
-      }
-
+    for (let i = 0; i < numPlayers; i++) {
       players[i] = {
         id: i,
         name: i === 0 ? 'You' : `CPU ${i}`,
-        hand: playerHand,
+        hand: dealtCards[i], // Each player gets their dealt cards (1 defuse + 7 regular)
         isEliminated: false,
         isCPU: i !== 0
       };
@@ -71,11 +37,14 @@ const ExplodingKittensGame = {
 
     const gameState = {
       players,
-      deck: fullDeck,
+      deck: finalDeck, // Remaining deck with 2 defuse + 3 exploding + 19 regular
       discardPile: []
     };
 
-    console.log('Setup complete. Deck remaining:', fullDeck.length);
+    console.log('Phase A Setup complete:');
+    console.log('- Players:', numPlayers);
+    console.log('- Deck remaining:', finalDeck.length);
+    console.log('- Each player starts with 8 cards (1 defuse + 7 regular)');
 
     return gameState;
   },

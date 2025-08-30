@@ -173,25 +173,22 @@ export function setupGameDeck(numPlayers = 4, random) {
   const defuseCards = allCards.filter(card => card.type === CARD_TYPES.DEFUSE);
   const regularCards = allCards.filter(card => card.type === CARD_TYPES.REGULAR);
 
-  // Prepare cards for dealing (exclude exploding kittens, include only needed defuse cards)
-  const cardsForDealing = [
-    ...defuseCards.slice(0, numPlayers), // 1 defuse per player
-    ...regularCards
-  ];
+  // Shuffle regular cards for dealing
+  const shuffledRegularCards = shuffleDeck(regularCards, random);
 
-  // Shuffle cards for dealing
-  const shuffledCardsForDealing = shuffleDeck(cardsForDealing, random);
-
-  // Deal 8 cards per player (1 defuse + 7 others)
+  // Deal cards to players: each gets exactly 1 defuse + 7 regular cards
   const dealtCards = [];
   for (let player = 0; player < numPlayers; player++) {
-    const playerCards = shuffledCardsForDealing.splice(0, 8);
+    const playerCards = [
+      defuseCards[player], // Each player gets exactly 1 defuse card
+      ...shuffledRegularCards.splice(0, 7) // Plus 7 regular cards
+    ];
     dealtCards.push(playerCards);
   }
 
   // Create final deck with remaining cards
   const remainingDefuseCards = defuseCards.slice(numPlayers); // Remaining 2 defuse cards
-  const remainingRegularCards = shuffledCardsForDealing; // Leftover regular cards
+  const remainingRegularCards = shuffledRegularCards; // Leftover regular cards after dealing
 
   const finalDeckCards = [
     ...remainingDefuseCards,
