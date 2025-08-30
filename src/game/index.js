@@ -123,13 +123,20 @@ const ExplodingKittensGame = {
    * @returns {Object} Initial game state (G)
    */
   setup: ({ ctx, random }) => {
+    // Debug logging to understand the issue
+    console.log('Setup called with ctx:', ctx);
+    console.log('ctx.numPlayers:', ctx.numPlayers);
+
     // Ensure exactly 4 players for Phase 1
     if (ctx.numPlayers !== 4) {
+      console.error(`Expected 4 players, got ${ctx.numPlayers}`);
       throw new Error('Phase 1 only supports exactly 4 players');
     }
 
     // Setup deck and deal initial cards
     const { dealtCards, finalDeck } = setupGameDeck(ctx.numPlayers, random);
+    console.log('dealtCards:', dealtCards);
+    console.log('finalDeck length:', finalDeck.length);
 
     // Create players with dealt cards
     const players = {};
@@ -142,7 +149,10 @@ const ExplodingKittensGame = {
       const initialHand = dealtCards[i];
 
       players[playerId] = createPlayer(playerId, playerName, isCPU, initialHand);
+      console.log(`Created player ${playerId}:`, players[playerId]);
     }
+
+    console.log('Final players object:', players);
 
     // Initialize game state
     const gameState = {
@@ -163,6 +173,8 @@ const ExplodingKittensGame = {
       lastAction: null
     };
 
+    console.log('Returning gameState:', gameState);
+    console.log('gameState.players:', gameState.players);
     return gameState;
   },
 
@@ -563,7 +575,7 @@ const ExplodingKittensGame = {
 
       // Strategy: Balance between playing cards and drawing
       // CPU should sometimes play cards to manage hand size and sometimes draw to advance game
-      
+
       // Add card playing moves with strategic weighting
       playableCards.forEach(({ index }) => {
         moves.push({ move: 'playCard', args: [index] });
@@ -593,43 +605,81 @@ const ExplodingKittensGame = {
     bot: {
       // Number of iterations for MCTS simulation
       iterations: 100,
-      
+
       // Enable objective function for better decision making
       objectives: {
         // Prefer moves that keep player alive (avoid risky draws when possible)
         survival: ({ G, playerID }) => {
           const player = G.players[playerID];
           if (!player || player.isEliminated) return 0;
-          
+
           // Higher value for having defuse cards
           const defuseCards = player.hand.filter(card => isDefuseCard(card)).length;
           const survivalScore = defuseCards * 10;
-          
+
           // Penalty for large hand size (more vulnerable to favor attacks in future phases)
           const handSizePenalty = Math.max(0, player.hand.length - 8) * 2;
-          
+
           return survivalScore - handSizePenalty;
         },
-        
+
         // Prefer moves that advance the game state
         progress: ({ G, ctx }) => {
           // Reward drawing cards to advance the game
           const turnProgress = ctx.turn * 0.1;
-          
+
           // Reward having fewer total cards in play (closer to endgame)
           const totalCardsInPlay = Object.values(G.players)
             .filter(p => !p.isEliminated)
             .reduce((sum, p) => sum + p.hand.length, 0);
           const progressScore = Math.max(0, 32 - totalCardsInPlay) * 0.5;
-          
+
           return turnProgress + progressScore;
         }
       }
     }
   },
 
-  // Hide secret information from players using PlayerView.STRIP_SECRETS
-  playerView: PlayerView.STRIP_SECRETS,
+  /**
+   * Custom player view function
+   * - Hide secret state (deck order, pending exploding kittens)
+   * - Keep all players visible (needed for UI)
+   * - Hide other players' specific cards but show card counts
+   */
+  playerView: ({ G, ctx, playerID }) => {
+    console.log('PlayerView called for playerID:', playerID);
+    console.log('Original G.players keys:', Object.keys(G.players || {}));
+
+    // Create a view of the game state for this specific player
+    const viewState = {
+      ...G,
+      // Remove secret state that players shouldn't see
+      secret: undefined,
+
+      // Keep all players visible but hide their specific cards
+      players: {}
+    };
+
+    // Add all players to the view, but filter their hands
+    Object.keys(G.players).forEach(pid => {
+      const player = G.players[pid];
+
+      if (pid === playerID) {
+        // Current player sees their full hand
+        viewState.players[pid] = { ...player };
+      } else {
+        // Other players - hide specific cards but show counts and status
+        viewState.players[pid] = {
+          ...player,
+          hand: [], // Hide specific cards
+          handSize: player.hand.length // But show count
+        };
+      }
+    });
+
+    console.log('PlayerView returning players keys:', Object.keys(viewState.players));
+    return viewState;
+  },
 
   // Player configuration for Phase 1 - exactly 4 players required
   minPlayers: 4,

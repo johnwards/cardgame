@@ -47,7 +47,7 @@ class ErrorBoundary extends Component {
               <h2 className="text-lg font-semibold mb-2">Component Stack:</h2>
               <div className="bg-gray-50 p-4 rounded border">
                 <pre className="text-sm text-gray-700 whitespace-pre-wrap">
-                  {this.state.errorInfo.componentStack}
+                  {this.state.errorInfo?.componentStack || 'No component stack available'}
                 </pre>
               </div>
             </div>

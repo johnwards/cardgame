@@ -2,17 +2,34 @@
  * Main GameBoard Component - boardgame.io Integration
  * 
  * Implements Task 3.1: Core React component integrated with boardgame.io Client
+ * Enhanced for Task 3.2: Player Hand and Card Interaction Components
  * - Receives {G, ctx, moves, playerID, isActive} props from boardgame.io
  * - Displays game state using G.players, G.deck.length, G.discardPile
  * - Shows turn indicator using ctx.currentPlayer and isActive prop
  * - Handles game over display with ctx.gameover.winner information
  * - Uses Tailwind CSS for responsive layout and styling
+ * - Integrates PlayerHand and OtherPlayers components for better organization
  */
 
+import PlayerHand from './PlayerHand';
+import OtherPlayers from './OtherPlayers';
+
 const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
+  // Debug logging to understand the issue
+  console.log('GameBoard render - playerID:', playerID);
+  console.log('GameBoard render - G.players:', G?.players);
+  console.log('GameBoard render - G.players keys:', Object.keys(G?.players || {}));
+  console.log('GameBoard render - ctx.currentPlayer:', ctx?.currentPlayer);
+  console.log('GameBoard render - ctx.numPlayers:', ctx?.numPlayers);
+
   // Comprehensive error handling
   if (!G) {
-    return <div className="p-8 text-red-600">Error: Game state (G) is null or undefined</div>;
+    return (
+      <div className="p-8 text-red-600">
+        <div>Error: Game state (G) is null or undefined</div>
+        <div>Props received: {JSON.stringify({ G, ctx, moves, playerID, isActive }, null, 2)}</div>
+      </div>
+    );
   }
 
   if (!ctx) {
@@ -43,17 +60,7 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
   const hasPendingExplodingKitten = G.secret?.pendingExplodingKitten &&
     G.secret?.pendingExplodingKittenPlayer === playerID;
 
-  // Helper function to get player status for display
-  const getPlayerStatus = (player) => {
-    if (player.isEliminated) return 'Eliminated 💀';
-    if (ctx.currentPlayer === player.id) return 'Current Turn ⚡';
-    return 'Waiting';
-  };
-
-  // Helper function to get player card count display
-  const getPlayerCardCount = (player) => {
-    return `${player.hand?.length || 0} cards`;
-  };
+  // No longer need helper functions - moved to component-specific files
 
   // Handle exploding kitten placement
   const handleExplodingKittenPlacement = (position) => {
@@ -147,37 +154,13 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Players Panel */}
+          {/* Other Players Panel */}
           <div className="lg:col-span-1">
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 text-white">
-              <h2 className="text-2xl font-bold mb-4">Players</h2>
-              <div className="space-y-4">
-                {Object.values(G.players).map((player) => (
-                  <div
-                    key={player.id}
-                    className={`p-4 rounded-lg border-2 transition-all ${ctx.currentPlayer === player.id
-                        ? 'border-yellow-400 bg-yellow-400/20 shadow-lg'
-                        : player.isEliminated
-                          ? 'border-red-400 bg-red-400/20 opacity-60'
-                          : 'border-white/30 bg-white/10'
-                      }`}
-                  >
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <h3 className="font-bold text-lg">{player.name}</h3>
-                        <p className="text-sm opacity-80">{getPlayerStatus(player)}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold">{getPlayerCardCount(player)}</p>
-                        {player.id === playerID && (
-                          <p className="text-xs text-yellow-300">You</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <OtherPlayers
+              players={G.players}
+              currentPlayer={ctx.currentPlayer}
+              playerID={playerID}
+            />
           </div>
 
           {/* Game Area */}
@@ -226,8 +209,8 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
               {/* Current Turn Indicator */}
               <div className="text-center mb-6">
                 <div className={`inline-block px-6 py-3 rounded-full font-bold text-lg ${ctx.currentPlayer === playerID
-                    ? 'bg-green-500 text-white'
-                    : 'bg-gray-500 text-white'
+                  ? 'bg-green-500 text-white'
+                  : 'bg-gray-500 text-white'
                   }`}>
                   {ctx.currentPlayer === playerID ? "Your Turn!" : `${currentPlayer.name}'s Turn`}
                   {isActive && ctx.currentPlayer === playerID && (
@@ -235,23 +218,6 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
                   )}
                 </div>
               </div>
-
-              {/* Action Buttons */}
-              {ctx.currentPlayer === playerID && isActive && !ctx.gameover && !hasPendingExplodingKitten && (
-                <div className="flex justify-center space-x-4">
-                  <button
-                    onClick={() => {
-                      if (moves.drawCard) {
-                        moves.drawCard();
-                      }
-                    }}
-                    disabled={G.deck?.length === 0}
-                    className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-500 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-lg transition-colors"
-                  >
-                    Draw Card 🎴
-                  </button>
-                </div>
-              )}
 
               {/* Pending Exploding Kitten Message */}
               {hasPendingExplodingKitten && (
@@ -264,36 +230,18 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
               )}
             </div>
 
-            {/* Human Player Hand */}
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 mt-6 text-white">
-              <h2 className="text-2xl font-bold mb-4">Your Hand</h2>
-              {humanPlayer.hand && humanPlayer.hand.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                  {humanPlayer.hand.map((card, index) => (
-                    <div
-                      key={card.id}
-                      className={`bg-white text-gray-800 rounded-lg p-3 text-center cursor-pointer hover:shadow-lg transform hover:scale-105 transition-all ${ctx.currentPlayer === playerID && isActive && !ctx.gameover && !hasPendingExplodingKitten
-                          ? 'hover:bg-yellow-100'
-                          : 'cursor-not-allowed opacity-75'
-                        }`}
-                      onClick={() => {
-                        if (ctx.currentPlayer === playerID && isActive && !ctx.gameover && !hasPendingExplodingKitten && moves.playCard) {
-                          moves.playCard(index);
-                        }
-                      }}
-                    >
-                      <div className="text-3xl mb-2">{card.emoji}</div>
-                      <div className="font-bold text-xs">{card.name}</div>
-                      <div className="text-xs opacity-70 mt-1">{card.description}</div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 opacity-60">
-                  <div className="text-4xl mb-2">🃏</div>
-                  <p>No cards in hand</p>
-                </div>
-              )}
+            {/* Enhanced Player Hand Component */}
+            <div className="mt-6">
+              <PlayerHand
+                player={humanPlayer}
+                isActive={isActive}
+                isCurrentPlayer={ctx.currentPlayer === playerID}
+                canPlayCards={!ctx.gameover && !hasPendingExplodingKitten}
+                canDrawCard={!ctx.gameover && !hasPendingExplodingKitten}
+                moves={moves}
+                deckCount={G.deck?.length || 0}
+                hasPendingExplodingKitten={hasPendingExplodingKitten}
+              />
             </div>
           </div>
         </div>

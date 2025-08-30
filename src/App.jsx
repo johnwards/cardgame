@@ -6,28 +6,29 @@
  */
 
 import { Client } from 'boardgame.io/react';
-import { Local } from 'boardgame.io/multiplayer';
 import ExplodingKittensGame from './game';
 import GameBoard from './components/GameBoard';
 import ErrorBoundary from './components/ErrorBoundary';
 import './index.css';
 
 /**
- * Configure boardgame.io Client with AI support for CPU players
- * The AI system is configured in the game definition itself
+ * Configure boardgame.io Client for single-player vs AI game
+ * Based on official documentation for single-player with built-in AI
  */
 const ExplodingKittensClient = Client({
   game: ExplodingKittensGame,
   board: GameBoard,
 
-  // Local multiplayer setup for single-device play
-  multiplayer: Local(),
-
-  // Number of players
+  // Specify 4 players for single-player vs AI mode
+  // boardgame.io defaults to 2 players in single-player mode
   numPlayers: 4,
 
+  // Single-player setup - no multiplayer configuration needed
+  // The game's ai.enumerate function handles CPU players automatically
+  // boardgame.io will call the AI during CPU turns (players 1, 2, 3)
+
   // Debug mode for development
-  debug: true // Enable debug mode to see more errors
+  debug: true
 });
 
 /**
@@ -38,18 +39,15 @@ function App() {
     <ErrorBoundary>
       <div className="App">
         {/* 
-          Render the game for the human player (playerID: '0')
+          Render the game in single-player mode with explicit playerID
           The boardgame.io framework automatically handles:
-          - CPU move enumeration through ai.enumerate
-          - Move validation through INVALID_MOVE returns
-          - Turn management through events.endTurn()
-          - CPU timing delays are implemented in GameBoard component
+          - Human player as player 0 ("You") 
+          - CPU players as players 1, 2, 3 through ai.enumerate
+          - Turn management and AI move execution
+          - Proper game state synchronization
           
-          Players:
-          - Player 0: Human player ("You")
-          - Player 1: CPU player ("CPU 1") 
-          - Player 2: CPU player ("CPU 2")
-          - Player 3: CPU player ("CPU 3")
+          playerID "0" explicitly assigns human to player 0
+          AI turns are executed automatically when it's a CPU player's turn
         */}
         <ExplodingKittensClient playerID="0" />
       </div>
