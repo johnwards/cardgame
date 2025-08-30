@@ -80,7 +80,7 @@ const ExplodingKittensGame = {
 
       console.log('Card played successfully, discard pile now has', G.discardPile.length, 'cards');
       console.log('=== PLAYCARD COMPLETE ===');
-      
+
       // Don't end turn - allow multiple card plays
     },
 
@@ -99,44 +99,59 @@ const ExplodingKittensGame = {
       // Check if it's an exploding kitten
       if (card.type === CARD_TYPES.EXPLODING) {
         console.log('EXPLODING KITTEN DRAWN!');
-        
+
         // Check for defuse card
         const defuseIndex = G.players[playerID].hand.findIndex(
           c => c.type === CARD_TYPES.DEFUSE
         );
-        
+
         if (defuseIndex !== -1) {
-          console.log('Player has defuse card at index:', defuseIndex);
-          
+          console.log('🛡️ Player has defuse card at index:', defuseIndex);
+          console.log('🛡️ Defuse card details:', G.players[playerID].hand[defuseIndex]);
+          console.log('🛡️ Player hand before defuse:', G.players[playerID].hand.length, 'cards');
+          console.log('🛡️ Discard pile before defuse:', G.discardPile.length, 'cards');
+
           // Player has defuse - remove it and discard it
           const defuseCard = G.players[playerID].hand.splice(defuseIndex, 1)[0];
           G.discardPile.push(defuseCard);
-          
+
+          console.log('🛡️ DEFUSE CARD CONSUMED!');
+          console.log('🛡️ Player hand after defuse:', G.players[playerID].hand.length, 'cards');
+          console.log('🛡️ Discard pile after defuse:', G.discardPile.length, 'cards');
+          console.log('🛡️ Defused card moved to discard:', defuseCard.name);
+
           // Set state for exploding kitten placement
           G.pendingExplodingKitten = card;
           G.pendingPlayer = playerID;
-          
-          console.log('Defuse used, awaiting exploding kitten placement');
-          
+
+          console.log('🛡️ Defuse used, awaiting exploding kitten placement');
+
           // Don't end turn - wait for placement
           return;
         } else {
-          console.log('Player has no defuse card - ELIMINATED!');
-          
+          console.log('💀 Player has no defuse card - ELIMINATED!');
+          console.log('💀 Player', playerID, 'hand contents:', G.players[playerID].hand.map(c => c.type));
+          console.log('💀 Player elimination status before:', G.players[playerID].isEliminated);
+
           // Player has no defuse - eliminate them
           G.players[playerID].isEliminated = true;
-          
+
+          console.log('💀 PLAYER ELIMINATED!');
+          console.log('💀 Player', playerID, 'elimination status after:', G.players[playerID].isEliminated);
+          console.log('💀 Player name:', G.players[playerID].name);
+
           // Don't add exploding kitten to hand - it exploded!
-          
+
           // Check win condition
           const alivePlayers = Object.values(G.players).filter(p => !p.isEliminated);
-          console.log('Players remaining alive:', alivePlayers.length);
-          
+          console.log('💀 Players remaining alive:', alivePlayers.length);
+          console.log('💀 Alive players:', alivePlayers.map(p => p.name));
+
           if (alivePlayers.length === 1) {
             console.log('Game over - single winner!');
             // Game will end via endIf condition
           }
-          
+
           // End turn after elimination
           console.log('Ending turn after player elimination');
           events.endTurn();
@@ -156,27 +171,49 @@ const ExplodingKittensGame = {
     placeExplodingKitten: ({ G, playerID, events }, position) => {
       console.log('=== PLACE EXPLODING KITTEN MOVE CALLED ===');
       console.log('playerID:', playerID, 'position:', position);
-      
+      console.log('💣 Deck length before placement:', G.deck.length);
+      console.log('💣 Deck top 3 cards before placement:', G.deck.slice(-3).map(c => c.name));
+
       if (!G.pendingExplodingKitten || G.pendingPlayer !== playerID) {
         console.log('No pending exploding kitten or wrong player');
         return INVALID_MOVE;
       }
-      
-      // Validate position (0 = top, deck.length = bottom)
+
+      // Validate position (0 = top of deck, deck.length = bottom of deck)
       if (position < 0 || position > G.deck.length) {
         console.log('Invalid position:', position, 'deck length:', G.deck.length);
         return INVALID_MOVE;
       }
-      
-      // Insert at specified position
-      G.deck.splice(position, 0, G.pendingExplodingKitten);
-      
-      console.log('Exploding kitten placed at position:', position);
-      
+
+      // Calculate actual array position
+      // Since deck.pop() takes from END of array, position 0 should be END of array
+      let actualPosition;
+      if (position === 0) {
+        // Top of deck = end of array (next card to be drawn)
+        actualPosition = G.deck.length;
+      } else if (position === G.deck.length) {
+        // Bottom of deck = beginning of array (last card to be drawn)
+        actualPosition = 0;
+      } else {
+        // Middle positions need to be flipped
+        actualPosition = G.deck.length - position;
+      }
+
+      console.log('💣 Requested position:', position, '(0=top, ' + G.deck.length + '=bottom)');
+      console.log('💣 Actual array position:', actualPosition);
+
+      // Insert at calculated position
+      G.deck.splice(actualPosition, 0, G.pendingExplodingKitten);
+
+      console.log('💣 EXPLODING KITTEN PLACED!');
+      console.log('💣 Deck length after placement:', G.deck.length);
+      console.log('💣 Deck top 3 cards after placement:', G.deck.slice(-3).map(c => c.name));
+      console.log('💣 Card placed:', G.pendingExplodingKitten.name);
+
       // Clear pending state
       G.pendingExplodingKitten = null;
       G.pendingPlayer = null;
-      
+
       console.log('Exploding kitten placement ends turn - passing to next player');
       events.endTurn();
       console.log('=== PLACE EXPLODING KITTEN COMPLETE ===');
@@ -186,7 +223,7 @@ const ExplodingKittensGame = {
   turn: {
     // No minMoves or maxMoves - turns end explicitly via events.endTurn()
     // Players can play multiple cards, but drawing always ends the turn
-    
+
     onBegin: ({ G, ctx, events }) => {
       // Skip eliminated players
       let currentPlayer = parseInt(ctx.currentPlayer);
@@ -199,7 +236,7 @@ const ExplodingKittensGame = {
 
   endIf: ({ G }) => {
     const alivePlayers = Object.values(G.players).filter(p => !p.isEliminated);
-    
+
     if (alivePlayers.length === 1) {
       console.log('Game over - single winner:', alivePlayers[0].name);
       return {
@@ -208,7 +245,7 @@ const ExplodingKittensGame = {
         reason: "Last player standing"
       };
     }
-    
+
     if (G.deck.length === 0) {
       console.log('Game over - deck exhausted');
       return {
@@ -217,7 +254,7 @@ const ExplodingKittensGame = {
         reason: "Deck exhausted"
       };
     }
-    
+
     return false;
   }
 };

@@ -118,9 +118,26 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
 
           {/* Game Area and Status */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Game Area */}
+            {/* Game Status Messages */}
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 text-white text-center">
               <h2 className="text-2xl font-bold mb-4">Game Area</h2>
+
+              {/* Special status messages */}
+              {G.pendingExplodingKitten && G.pendingPlayer === playerID && (
+                <div className="mb-4 p-3 bg-orange-600 rounded-lg">
+                  <div className="font-bold">🛡️ DEFUSE USED!</div>
+                  <div className="text-sm">You used a defuse card and survived the exploding kitten!</div>
+                </div>
+              )}
+
+              {/* Check if human player was recently eliminated */}
+              {humanPlayer.isEliminated && (
+                <div className="mb-4 p-3 bg-red-600 rounded-lg">
+                  <div className="font-bold">💀 YOU WERE ELIMINATED!</div>
+                  <div className="text-sm">You drew an exploding kitten without a defuse card!</div>
+                </div>
+              )}
+
               <div className="flex justify-center gap-8">
                 <div className="text-center">
                   <div className="text-4xl mb-2">🎴</div>
@@ -160,19 +177,19 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
                     onClick={() => moves.placeExplodingKitten(0)}
                     className="bg-white text-red-600 font-bold py-2 px-4 rounded hover:bg-gray-100 transition-colors"
                   >
-                    Top of Deck
+                    🔥 Top (Next Player Gets It!)
                   </button>
                   <button
                     onClick={() => moves.placeExplodingKitten(Math.floor(G.deck.length / 2))}
                     className="bg-white text-red-600 font-bold py-2 px-4 rounded hover:bg-gray-100 transition-colors"
                   >
-                    Middle of Deck
+                    🎯 Middle of Deck
                   </button>
                   <button
                     onClick={() => moves.placeExplodingKitten(G.deck.length)}
                     className="bg-white text-red-600 font-bold py-2 px-4 rounded hover:bg-gray-100 transition-colors"
                   >
-                    Bottom of Deck
+                    🛡️ Bottom (Safest)
                   </button>
                 </div>
               </div>

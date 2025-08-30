@@ -163,7 +163,7 @@ const PlayerHand = ({
             // Check if this specific card can be played
             const isRegularCard = card.type === 'regular';
             const canPlayThisCard = cardsPlayable && isRegularCard;
-            
+
             return (
               <div
                 key={card.id}

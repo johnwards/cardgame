@@ -15,10 +15,10 @@ export const CARD_TYPES = {
 
 // Phase 1 deck composition for 4 players
 export const PHASE1_DECK_CONFIG = {
-  // Core dangerous cards
-  [CARD_TYPES.EXPLODING]: 3, // 4 players - 1 = 3 exploding kittens
-  [CARD_TYPES.DEFUSE]: 6,    // Each player gets 1, remaining 2 go in deck
-  [CARD_TYPES.REGULAR]: 47   // Regular safe cards for Phase 1
+  // Core dangerous cards - TEMPORARILY INCREASED FOR TESTING
+  [CARD_TYPES.EXPLODING]: 8, // Increased from 3 to 8 for easier testing
+  [CARD_TYPES.DEFUSE]: 8,    // Increased from 6 to 8 for testing
+  [CARD_TYPES.REGULAR]: 40   // Decreased from 47 to 40 to maintain deck size
 };
 
 // Total cards calculation: 3 + 6 + 47 = 56 cards
