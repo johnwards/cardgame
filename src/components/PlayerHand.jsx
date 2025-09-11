@@ -6,6 +6,7 @@
 
 import { useState } from 'react';
 import PlayerTargetSelection from './PlayerTargetSelection';
+import CatPairSelection from './CatPairSelection';
 
 const PlayerHand = ({
   player,
@@ -21,9 +22,39 @@ const PlayerHand = ({
 }) => {
   const [showTargetSelection, setShowTargetSelection] = useState(false);
   const [pendingFavorCardIndex, setPendingFavorCardIndex] = useState(null);
+  const [showCatPairSelection, setShowCatPairSelection] = useState(false);
+  const [availableCatPairs, setAvailableCatPairs] = useState([]);
 
   // Check if this player needs to give a card for a favor
   const needsToGiveFavorCard = gameState.pendingFavor && gameState.favorTarget === player?.id;
+
+  // Find available cat pairs
+  const findCatPairs = () => {
+    if (!player?.hand) return [];
+    
+    const catGroups = {};
+    player.hand.forEach((card, index) => {
+      if (card.type === 'cat') {
+        if (!catGroups[card.name]) {
+          catGroups[card.name] = [];
+        }
+        catGroups[card.name].push({ card, index });
+      }
+    });
+
+    const pairs = [];
+    Object.entries(catGroups).forEach(([catName, cards]) => {
+      if (cards.length >= 2) {
+        pairs.push({
+          catName,
+          cards: cards.slice(0, 2), // Take first 2 cards
+          emoji: cards[0].card.emoji
+        });
+      }
+    });
+
+    return pairs;
+  };
 
   console.log('PlayerHand render:', {
     player: player?.name,
@@ -67,6 +98,23 @@ const PlayerHand = ({
       return;
     }
 
+    // Special handling for Cat cards - check for pairs
+    if (card.type === 'cat') {
+      console.log('Cat card clicked, checking for pairs');
+      const pairs = findCatPairs();
+      const matchingPair = pairs.find(pair => pair.catName === card.name);
+      
+      if (matchingPair) {
+        console.log('Found matching cat pair for:', card.name);
+        setAvailableCatPairs([matchingPair]);
+        setShowCatPairSelection(true);
+        return;
+      } else {
+        console.log('No matching pair found for cat:', card.name);
+        // Fall through to normal card play (which will just discard it)
+      }
+    }
+
     // For other cards, play normally
     if (cardsPlayable && moves.playCard) {
       console.log('Calling moves.playCard for non-favor card');
@@ -94,6 +142,28 @@ const PlayerHand = ({
     console.log('Target selection cancelled');
     setShowTargetSelection(false);
     setPendingFavorCardIndex(null);
+  };
+
+  // Handle cat pair target selection
+  const handleCatPairTargetSelection = (targetPlayerID, cardIndex) => {
+    console.log('Cat pair target and card selected:', targetPlayerID, cardIndex);
+    setShowCatPairSelection(false);
+    
+    if (availableCatPairs.length > 0 && moves.playCatPair) {
+      const catPair = availableCatPairs[0];
+      console.log('Playing cat pair:', catPair.catName, 'against player', targetPlayerID);
+      // Note: cardIndex is not used in the current game logic, it picks random
+      moves.playCatPair(catPair.catName, targetPlayerID);
+    }
+    
+    setAvailableCatPairs([]);
+  };
+
+  // Handle cancelling cat pair selection
+  const handleCancelCatPairSelection = () => {
+    console.log('Cat pair selection cancelled');
+    setShowCatPairSelection(false);
+    setAvailableCatPairs([]);
   };
 
   // Handle draw card with validation
@@ -155,6 +225,17 @@ const PlayerHand = ({
           onCancel={handleCancelTargetSelection}
           title="Choose Player for Favor"
           description="Select which player you want to request a card from:"
+        />
+      )}
+
+      {/* Cat Pair Selection Modal */}
+      {showCatPairSelection && availableCatPairs.length > 0 && (
+        <CatPairSelection
+          catPair={availableCatPairs[0]}
+          players={players}
+          currentPlayerID={player.id}
+          onSelectTarget={handleCatPairTargetSelection}
+          onCancel={handleCancelCatPairSelection}
         />
       )}
 
@@ -235,6 +316,10 @@ const PlayerHand = ({
             // Determine card interactivity based on current state
             let canPlayThisCard, cardAction, cardBgStyle;
 
+            // Check if this cat card has a pair available
+            const catPairs = findCatPairs();
+            const hasPair = card.type === 'cat' && catPairs.some(pair => pair.catName === card.name);
+
             if (needsToGiveFavorCard) {
               // In favor giving mode - all cards are selectable
               canPlayThisCard = true;
@@ -249,7 +334,18 @@ const PlayerHand = ({
                 card.type === 'favor' ||
                 card.type === 'cat'
               );
-              cardAction = card.type === 'favor' ? 'Click to choose target' : 'Click to play';
+              
+              if (card.type === 'favor') {
+                cardAction = 'Click to choose target';
+              } else if (card.type === 'cat' && hasPair) {
+                cardAction = 'Click to play pair';
+              } else if (card.type === 'cat') {
+                cardAction = 'Need pair to play';
+                canPlayThisCard = false; // Can't play single cat cards
+              } else {
+                cardAction = 'Click to play';
+              }
+
               cardBgStyle = canPlayThisCard
                 ? 'cursor-pointer hover:shadow-xl hover:scale-105 hover:bg-yellow-50 hover:-translate-y-1'
                 : 'cursor-not-allowed opacity-75';
@@ -265,9 +361,11 @@ const PlayerHand = ({
                     ? 'border-2 border-red-500 bg-red-50'
                     : card.type === 'defuse'
                       ? 'border-2 border-green-500 bg-green-50'
-                      : needsToGiveFavorCard
-                        ? '' // border already set above
-                        : 'border border-gray-200'
+                      : card.type === 'cat' && hasPair
+                        ? 'border-2 border-orange-400 bg-orange-50'
+                        : needsToGiveFavorCard
+                          ? '' // border already set above
+                          : 'border border-gray-200'
                   }
                 `}
                 onClick={() => canPlayThisCard && handleCardPlay(index)}
@@ -284,6 +382,13 @@ const PlayerHand = ({
                 <div className="text-xs opacity-70 leading-tight">
                   {card.type}
                 </div>
+
+                {/* Cat Pair Indicator */}
+                {card.type === 'cat' && hasPair && (
+                  <div className="mt-1 text-xs font-bold text-orange-600">
+                    PAIR!
+                  </div>
+                )}
 
                 {/* Card Type Indicator */}
                 {card.type === 'exploding' && (
