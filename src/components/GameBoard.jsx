@@ -188,6 +188,7 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
               moves={moves}
               deckCount={G.deck?.length || 0}
               hasPendingExplodingKitten={G.pendingExplodingKitten && G.pendingPlayer === playerID}
+              players={G.players} // Pass all players for target selection
             />
 
             {/* Exploding Kitten Placement Interface */}

@@ -4,6 +4,9 @@
  * Minimal version to test basic functionality
  */
 
+import { useState } from 'react';
+import PlayerTargetSelection from './PlayerTargetSelection';
+
 const PlayerHand = ({
   player,
   isActive,
@@ -12,8 +15,12 @@ const PlayerHand = ({
   canDrawCard,
   moves,
   deckCount,
-  hasPendingExplodingKitten = false
+  hasPendingExplodingKitten = false,
+  players = {} // Add players prop for target selection
 }) => {
+  const [showTargetSelection, setShowTargetSelection] = useState(false);
+  const [pendingFavorCardIndex, setPendingFavorCardIndex] = useState(null);
+
   console.log('PlayerHand render:', {
     player: player?.name,
     isActive,
@@ -28,12 +35,48 @@ const PlayerHand = ({
   // Handle card play with validation
   const handleCardPlay = (cardIndex) => {
     console.log('handleCardPlay called:', cardIndex);
+    const card = player?.hand?.[cardIndex];
+    
+    if (!card) {
+      console.log('No card at index:', cardIndex);
+      return;
+    }
+
+    // Special handling for Favor cards - show target selection
+    if (card.type === 'favor') {
+      console.log('Favor card clicked, showing target selection');
+      setPendingFavorCardIndex(cardIndex);
+      setShowTargetSelection(true);
+      return;
+    }
+
+    // For other cards, play normally
     if (cardsPlayable && moves.playCard) {
-      console.log('Calling moves.playCard');
+      console.log('Calling moves.playCard for non-favor card');
       moves.playCard(cardIndex);
     } else {
       console.log('Cannot play cards or no playCard move');
     }
+  };
+
+  // Handle target selection for Favor cards
+  const handleTargetSelection = (targetPlayerID) => {
+    console.log('Target selected for favor:', targetPlayerID);
+    setShowTargetSelection(false);
+    
+    if (pendingFavorCardIndex !== null && moves.playCard) {
+      console.log('Playing favor card with target:', pendingFavorCardIndex, targetPlayerID);
+      moves.playCard(pendingFavorCardIndex, targetPlayerID);
+    }
+    
+    setPendingFavorCardIndex(null);
+  };
+
+  // Handle cancelling target selection
+  const handleCancelTargetSelection = () => {
+    console.log('Target selection cancelled');
+    setShowTargetSelection(false);
+    setPendingFavorCardIndex(null);
   };
 
   // Handle draw card with validation
@@ -86,6 +129,18 @@ const PlayerHand = ({
 
   return (
     <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 text-white">
+      {/* Target Selection Modal */}
+      {showTargetSelection && (
+        <PlayerTargetSelection
+          players={players}
+          currentPlayerID={player.id}
+          onSelectTarget={handleTargetSelection}
+          onCancel={handleCancelTargetSelection}
+          title="Choose Player for Favor"
+          description="Select which player you want to request a card from:"
+        />
+      )}
+
       {/* Hand Header */}
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">Your Hand</h2>
@@ -215,7 +270,7 @@ const PlayerHand = ({
                 {/* Interactive State Indicator */}
                 {canPlayThisCard && (
                   <div className="mt-1 text-xs text-blue-600 opacity-50">
-                    Click to play
+                    {card.type === 'favor' ? 'Click to choose target' : 'Click to play'}
                   </div>
                 )}
                 {cardsPlayable && !canPlayThisCard && card.type !== 'exploding' && card.type !== 'defuse' && (
@@ -244,7 +299,7 @@ const PlayerHand = ({
         <div className="mt-4 text-center">
           <div className="text-xs opacity-60">
             {cardsPlayable ? (
-              <>Click cards to play them • Draw a card to end your turn</>
+              <>Click cards to play them • Favor cards will ask you to choose a target • Draw a card to end your turn</>
             ) : (
               <>Wait for your turn to play cards</>
             )}

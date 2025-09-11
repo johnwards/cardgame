@@ -114,15 +114,8 @@ const ExplodingKittensGame = {
 
         case CARD_TYPES.FAVOR:
           if (targetPlayerID === undefined || targetPlayerID === playerID) {
-            // For UI calls without target, find first valid target automatically
-            const alivePlayerIDs = Object.keys(G.players).filter(
-              id => id !== playerID && !G.players[id].isEliminated && G.players[id].hand.length > 0
-            );
-            if (alivePlayerIDs.length === 0) {
-              console.log('No valid favor targets');
-              return INVALID_MOVE;
-            }
-            targetPlayerID = parseInt(alivePlayerIDs[0]); // Pick first available target
+            console.log('Favor card requires target player selection');
+            return INVALID_MOVE;
           }
           if (G.players[targetPlayerID]?.isEliminated) {
             console.log('Cannot favor eliminated player');
@@ -133,8 +126,20 @@ const ExplodingKittensGame = {
             return INVALID_MOVE;
           }
           console.log('Favor card played - requesting card from player', targetPlayerID);
-          G.pendingFavor = playerID;
-          G.favorTarget = targetPlayerID;
+          
+          // For CPU players, immediately give a random card
+          if (G.players[targetPlayerID].isCPU) {
+            console.log('Target is CPU, immediately giving random card');
+            const targetHand = G.players[targetPlayerID].hand;
+            const randomIndex = Math.floor(Math.random() * targetHand.length);
+            const givenCard = targetHand.splice(randomIndex, 1)[0];
+            G.players[playerID].hand.push(givenCard);
+            console.log('CPU gave card:', givenCard.name);
+          } else {
+            // For human players, set up pending favor state
+            G.pendingFavor = playerID;
+            G.favorTarget = targetPlayerID;
+          }
           break;
 
         case CARD_TYPES.CAT:
