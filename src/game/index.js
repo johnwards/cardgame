@@ -11,7 +11,7 @@
  */
 
 import { INVALID_MOVE } from 'boardgame.io/core';
-import { setupGameDeck, CARD_TYPES } from '../constants/cards.js';
+import { setupGameDeck, CARD_TYPES, findCatPairs } from '../constants/cards.js';
 
 console.log('Game file loading...');
 
@@ -41,10 +41,13 @@ const ExplodingKittensGame = {
 
     const gameState = {
       players,
-      deck: finalDeck, // Remaining deck with 2 defuse + 3 exploding + 19 regular
+      deck: finalDeck, // Remaining deck with 4 defuse + 8 exploding + remaining action cards
       discardPile: [],
       pendingExplodingKitten: null, // For defused exploding kittens awaiting placement
-      pendingPlayer: null // Player who needs to place the exploding kitten
+      pendingPlayer: null, // Player who needs to place the exploding kitten
+      turnsRemaining: {}, // Track extra turns from Attack cards
+      pendingFavor: null, // Track pending favor requests
+      favorTarget: null   // Target player for favor
     };
 
     console.log('Phase C Setup complete:');
@@ -57,9 +60,9 @@ const ExplodingKittensGame = {
   },
 
   moves: {
-    playCard: ({ G, playerID }, cardIndex) => {
+    playCard: ({ G, playerID, events, random }, cardIndex, targetPlayerID) => {
       console.log('=== PLAYCARD MOVE CALLED ===');
-      console.log('playerID:', playerID, 'cardIndex:', cardIndex);
+      console.log('playerID:', playerID, 'cardIndex:', cardIndex, 'targetPlayerID:', targetPlayerID);
 
       // Validate card index
       if (cardIndex < 0 || cardIndex >= G.players[playerID].hand.length) {
@@ -70,20 +73,81 @@ const ExplodingKittensGame = {
       const card = G.players[playerID].hand[cardIndex];
       console.log('Attempting to play card:', card.name, 'type:', card.type);
 
-      // Only allow regular cards for Phase B.1
-      if (card.type !== CARD_TYPES.REGULAR) {
-        console.log('Cannot play non-regular card in Phase B.1');
-        return INVALID_MOVE;
-      }
-
-      // Move card from hand to discard pile
+      // Remove card from hand and add to discard pile
       G.players[playerID].hand.splice(cardIndex, 1);
       G.discardPile.push(card);
 
-      console.log('Card played successfully, discard pile now has', G.discardPile.length, 'cards');
-      console.log('=== PLAYCARD COMPLETE ===');
+      // Handle card effects based on type
+      switch (card.type) {
+        case CARD_TYPES.SKIP:
+          console.log('Skip card played - ending turn without drawing');
+          // Check if player has multiple turns from attack
+          if (G.turnsRemaining[playerID] && G.turnsRemaining[playerID] > 1) {
+            G.turnsRemaining[playerID]--;
+            console.log('Player', playerID, 'skipped one turn, has', G.turnsRemaining[playerID], 'turns remaining');
+            // Don't end turn, player continues
+          } else {
+            // Reset turns and end turn normally
+            G.turnsRemaining[playerID] = 1;
+            events.endTurn();
+          }
+          break;
 
-      // Don't end turn - allow multiple card plays
+        case CARD_TYPES.SHUFFLE:
+          console.log('Shuffle card played - shuffling deck');
+          G.deck = random.Shuffle([...G.deck]);
+          break;
+
+        case CARD_TYPES.ATTACK: {
+          console.log('Attack card played - forcing next player to take 2 turns');
+          const nextPlayerIndex = (parseInt(playerID) + 1) % Object.keys(G.players).length;
+          let nextPlayer = nextPlayerIndex;
+          // Skip eliminated players
+          while (G.players[nextPlayer]?.isEliminated) {
+            nextPlayer = (nextPlayer + 1) % Object.keys(G.players).length;
+          }
+          G.turnsRemaining[nextPlayer] = (G.turnsRemaining[nextPlayer] || 1) + 1;
+          console.log('Next player', nextPlayer, 'now has', G.turnsRemaining[nextPlayer], 'turns');
+          events.endTurn();
+          break;
+        }
+
+        case CARD_TYPES.FAVOR:
+          if (targetPlayerID === undefined || targetPlayerID === playerID) {
+            // For UI calls without target, find first valid target automatically
+            const alivePlayerIDs = Object.keys(G.players).filter(
+              id => id !== playerID && !G.players[id].isEliminated && G.players[id].hand.length > 0
+            );
+            if (alivePlayerIDs.length === 0) {
+              console.log('No valid favor targets');
+              return INVALID_MOVE;
+            }
+            targetPlayerID = parseInt(alivePlayerIDs[0]); // Pick first available target
+          }
+          if (G.players[targetPlayerID]?.isEliminated) {
+            console.log('Cannot favor eliminated player');
+            return INVALID_MOVE;
+          }
+          if (G.players[targetPlayerID].hand.length === 0) {
+            console.log('Target player has no cards');
+            return INVALID_MOVE;
+          }
+          console.log('Favor card played - requesting card from player', targetPlayerID);
+          G.pendingFavor = playerID;
+          G.favorTarget = targetPlayerID;
+          break;
+
+        case CARD_TYPES.CAT:
+          console.log('Cat card played - but no special effect for single cat');
+          break;
+
+        default:
+          console.log('Unknown card type:', card.type);
+          break;
+      }
+
+      console.log('Card played successfully');
+      console.log('=== PLAYCARD COMPLETE ===');
     },
 
     drawCard: ({ G, playerID, events }) => {
@@ -165,8 +229,19 @@ const ExplodingKittensGame = {
         console.log('Regular card added to hand');
       }
 
-      console.log('Drawing card ends turn - passing to next player');
-      events.endTurn();
+      // Check if player has multiple turns from attack
+      if (G.turnsRemaining[playerID] && G.turnsRemaining[playerID] > 1) {
+        G.turnsRemaining[playerID]--;
+        console.log('Player', playerID, 'has', G.turnsRemaining[playerID], 'turns remaining, not ending turn');
+        // Don't end turn, player continues
+        return;
+      } else {
+        // Reset turns and end turn normally
+        G.turnsRemaining[playerID] = 1;
+        console.log('Drawing card ends turn - passing to next player');
+        events.endTurn();
+      }
+
       console.log('=== DRAWCARD COMPLETE ===');
     },
 
@@ -174,7 +249,7 @@ const ExplodingKittensGame = {
       console.log('=== PLACE EXPLODING KITTEN MOVE CALLED ===');
       console.log('playerID:', playerID, 'position:', position);
       console.log('💣 Deck length before placement:', G.deck.length);
-      console.log('💣 Deck top 3 cards before placement:', G.deck.slice(-3).map(c => c.name));
+      console.log('💣 Deck top 3 cards before placement (next to draw first):', G.deck.slice(-3).map(c => c.name).reverse());
 
       if (!G.pendingExplodingKitten || G.pendingPlayer !== playerID) {
         console.log('No pending exploding kitten or wrong player');
@@ -209,16 +284,105 @@ const ExplodingKittensGame = {
 
       console.log('💣 EXPLODING KITTEN PLACED!');
       console.log('💣 Deck length after placement:', G.deck.length);
-      console.log('💣 Deck top 3 cards after placement:', G.deck.slice(-3).map(c => c.name));
+      console.log('💣 Deck top 3 cards after placement (next to draw first):', G.deck.slice(-3).map(c => c.name).reverse());
       console.log('💣 Card placed:', G.pendingExplodingKitten.name);
+      console.log('💣 Note: Position 0 = top of deck = next card to be drawn = end of array');
 
       // Clear pending state
       G.pendingExplodingKitten = null;
       G.pendingPlayer = null;
 
-      console.log('Exploding kitten placement ends turn - passing to next player');
-      events.endTurn();
+      // Check if player has multiple turns from attack
+      if (G.turnsRemaining[playerID] && G.turnsRemaining[playerID] > 1) {
+        G.turnsRemaining[playerID]--;
+        console.log('Player', playerID, 'placed exploding kitten, has', G.turnsRemaining[playerID], 'turns remaining');
+        // Don't end turn, player continues
+      } else {
+        // Reset turns and end turn normally
+        G.turnsRemaining[playerID] = 1;
+        console.log('Exploding kitten placement ends turn - passing to next player');
+        events.endTurn();
+      }
+
       console.log('=== PLACE EXPLODING KITTEN COMPLETE ===');
+    },
+
+    giveFavorCard: ({ G, playerID }, cardIndex) => {
+      console.log('=== GIVE FAVOR CARD MOVE CALLED ===');
+      console.log('playerID:', playerID, 'cardIndex:', cardIndex);
+
+      if (G.favorTarget !== playerID || !G.pendingFavor) {
+        console.log('No pending favor for this player');
+        return INVALID_MOVE;
+      }
+
+      if (cardIndex < 0 || cardIndex >= G.players[playerID].hand.length) {
+        console.log('Invalid card index');
+        return INVALID_MOVE;
+      }
+
+      const card = G.players[playerID].hand.splice(cardIndex, 1)[0];
+      G.players[G.pendingFavor].hand.push(card);
+
+      console.log('Favor completed - card given to player', G.pendingFavor);
+
+      // Clear favor state
+      G.pendingFavor = null;
+      G.favorTarget = null;
+
+      console.log('=== GIVE FAVOR CARD COMPLETE ===');
+    },
+
+    playCatPair: ({ G, playerID, random }, catName, targetPlayerID) => {
+      console.log('=== PLAY CAT PAIR MOVE CALLED ===');
+      console.log('playerID:', playerID, 'catName:', catName, 'targetPlayerID:', targetPlayerID);
+
+      if (targetPlayerID === undefined || targetPlayerID === playerID) {
+        console.log('Invalid target player');
+        return INVALID_MOVE;
+      }
+
+      if (G.players[targetPlayerID]?.isEliminated) {
+        console.log('Cannot target eliminated player');
+        return INVALID_MOVE;
+      }
+
+      if (G.players[targetPlayerID].hand.length === 0) {
+        console.log('Target player has no cards');
+        return INVALID_MOVE;
+      }
+
+      // Find matching cat cards
+      const catCards = G.players[playerID].hand.filter(
+        card => card.type === CARD_TYPES.CAT && card.name === catName
+      );
+
+      if (catCards.length < 2) {
+        console.log('Not enough matching cat cards');
+        return INVALID_MOVE;
+      }
+
+      // Remove 2 cat cards from hand and discard them
+      const usedCards = [];
+      for (let i = 0; i < 2; i++) {
+        const cardIndex = G.players[playerID].hand.findIndex(
+          card => card.type === CARD_TYPES.CAT && card.name === catName
+        );
+        if (cardIndex !== -1) {
+          usedCards.push(G.players[playerID].hand.splice(cardIndex, 1)[0]);
+        }
+      }
+
+      G.discardPile.push(...usedCards);
+
+      // Steal random card from target
+      const targetHand = G.players[targetPlayerID].hand;
+      const randomIndex = random.Die(targetHand.length) - 1; // Die returns 1-N, we need 0-N-1
+      const stolenCard = targetHand.splice(randomIndex, 1)[0];
+      G.players[playerID].hand.push(stolenCard);
+
+      console.log('Cat pair played - stolen card:', stolenCard.name);
+      console.log('=== PLAY CAT PAIR COMPLETE ===');
     }
   },
 
@@ -232,7 +396,10 @@ const ExplodingKittensGame = {
       if (G.players[currentPlayer]?.isEliminated) {
         console.log('Skipping eliminated player:', currentPlayer);
         events.endTurn();
+        return;
       }
+
+      console.log('Turn begins for player', currentPlayer);
     }
   },
 
@@ -265,13 +432,13 @@ const ExplodingKittensGame = {
     enumerate: (G, ctx) => {
       console.log('=== AI ENUMERATE CALLED ===');
       const playerID = ctx.currentPlayer;
-
       const moves = [];
+
       console.log('CPU player', playerID, 'is active, generating moves...');
+
       // Handle pending exploding kitten placement first
       if (G.pendingExplodingKitten && G.pendingPlayer === playerID) {
         console.log('CPU needs to place exploding kitten');
-
         const deckLength = G.deck.length;
         moves.push({ move: 'placeExplodingKitten', args: [0] });
         moves.push({ move: 'placeExplodingKitten', args: [Math.floor(deckLength / 3)] });
@@ -280,19 +447,86 @@ const ExplodingKittensGame = {
         return moves;
       }
 
+      // Handle pending favor
+      if (G.favorTarget === playerID && G.pendingFavor !== null) {
+        console.log('CPU needs to give favor card');
+        const hand = G.players[playerID].hand;
+        for (let i = 0; i < hand.length; i++) {
+          // Prefer giving non-defuse cards
+          if (hand[i].type !== CARD_TYPES.DEFUSE) {
+            moves.push({ move: 'giveFavorCard', args: [i] });
+          }
+        }
+        // If only defuse cards, give one anyway
+        if (moves.length === 0) {
+          for (let i = 0; i < hand.length; i++) {
+            moves.push({ move: 'giveFavorCard', args: [i] });
+          }
+        }
+        return moves;
+      }
+
       const player = G.players[playerID];
       console.log('CPU player', playerID, 'hand size:', player.hand.length);
 
-      const regularCards = player.hand.filter(card => card.type === CARD_TYPES.REGULAR);
-      const defuseCards = player.hand.filter(card => card.type === CARD_TYPES.DEFUSE);
+      // Find other alive players for targeting
+      const alivePlayerIDs = Object.keys(G.players).filter(
+        id => id !== playerID && !G.players[id].isEliminated
+      );
 
-      console.log('CPU', playerID, 'has', regularCards.length, 'regular cards and', defuseCards.length, 'defuse cards');
+      // Enumerate card plays
+      for (let i = 0; i < player.hand.length; i++) {
+        const card = player.hand[i];
 
-      for (let i = 0; i++; i < regularCards.length) {
-        moves.push({ move: 'playCard', args: [i] });
+        switch (card.type) {
+          case CARD_TYPES.SKIP:
+          case CARD_TYPES.SHUFFLE:
+          case CARD_TYPES.ATTACK:
+            moves.push({ move: 'playCard', args: [i] });
+            break;
+
+          case CARD_TYPES.FAVOR:
+            // Target each alive player
+            alivePlayerIDs.forEach(targetID => {
+              if (G.players[targetID].hand.length > 0) {
+                moves.push({ move: 'playCard', args: [i, parseInt(targetID)] });
+              }
+            });
+            break;
+
+          case CARD_TYPES.CAT: {
+            // Check for cat pairs
+            const catName = card.name;
+            const matchingCats = player.hand.filter(c =>
+              c.type === CARD_TYPES.CAT && c.name === catName
+            );
+
+            if (matchingCats.length >= 2) {
+              // Can play cat pair against each alive player
+              alivePlayerIDs.forEach(targetID => {
+                if (G.players[targetID].hand.length > 0) {
+                  moves.push({ move: 'playCatPair', args: [catName, parseInt(targetID)] });
+                }
+              });
+            }
+            break;
+          }
+
+          case CARD_TYPES.DEFUSE:
+            // Never play defuse cards unless forced
+            break;
+
+          default:
+            // Unknown card type, can try to play it
+            moves.push({ move: 'playCard', args: [i] });
+            break;
+        }
       }
+
+      // Always include draw card as an option (ends turn)
       moves.push({ move: 'drawCard', args: [] });
 
+      console.log('Generated', moves.length, 'possible moves for CPU', playerID);
       return moves;
     }
   }

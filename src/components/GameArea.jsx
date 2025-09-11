@@ -14,7 +14,7 @@ const GameArea = ({ deck, discardPile }) => {
   return (
     <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 text-white">
       <h3 className="text-2xl font-bold text-center mb-6">Game Area</h3>
-      
+
       <div className="grid grid-cols-2 gap-8">
         {/* Draw Pile */}
         <div className="text-center">
@@ -39,13 +39,13 @@ const GameArea = ({ deck, discardPile }) => {
                   </div>
                 )}
               </div>
-              
+
               {/* Deck Count */}
               <div className="font-bold text-2xl mb-1">{deckCount}</div>
               <div className="text-sm opacity-80">
                 {deckCount === 1 ? 'card' : 'cards'} remaining
               </div>
-              
+
               {/* Deck Status */}
               <div className="mt-3 text-xs">
                 {deckCount > 10 && (
@@ -86,28 +86,28 @@ const GameArea = ({ deck, discardPile }) => {
                     )}
                     <div className={`
                       w-16 h-20 rounded-lg flex items-center justify-center mx-auto border-2 
-                      ${topDiscardCard.type === 'exploding' 
-                        ? 'bg-red-600 border-red-300/50' 
+                      ${topDiscardCard.type === 'exploding'
+                        ? 'bg-red-600 border-red-300/50'
                         : topDiscardCard.type === 'defuse'
-                        ? 'bg-green-600 border-green-300/50'
-                        : 'bg-white border-gray-300/50'
+                          ? 'bg-green-600 border-green-300/50'
+                          : 'bg-white border-gray-300/50'
                       }
                     `}>
-                      <div className={`text-4xl ${topDiscardCard.type !== 'regular' ? 'text-white' : 'text-gray-800'}`}>
+                      <div className={`text-4xl ${topDiscardCard.type === 'exploding' || topDiscardCard.type === 'defuse' ? 'text-white' : 'text-gray-800'}`}>
                         {topDiscardCard.emoji}
                       </div>
                     </div>
                   </div>
-                  
+
                   {/* Card Details */}
                   <div className="font-bold text-lg mb-1">{topDiscardCard.name}</div>
                   <div className="text-sm opacity-80 mb-2">{topDiscardCard.description}</div>
-                  
+
                   {/* Discard Pile Count */}
                   <div className="text-xs opacity-70">
                     {discardPile.length} {discardPile.length === 1 ? 'card' : 'cards'} discarded
                   </div>
-                  
+
                   {/* Card Type Indicator */}
                   <div className="mt-2">
                     {topDiscardCard.type === 'exploding' && (
@@ -120,9 +120,9 @@ const GameArea = ({ deck, discardPile }) => {
                         Safety
                       </span>
                     )}
-                    {topDiscardCard.type === 'regular' && (
+                    {(topDiscardCard.type === 'skip' || topDiscardCard.type === 'favor' || topDiscardCard.type === 'shuffle' || topDiscardCard.type === 'attack' || topDiscardCard.type === 'cat') && (
                       <span className="px-2 py-1 bg-blue-500/30 text-blue-200 rounded-full text-xs">
-                        Regular
+                        Action
                       </span>
                     )}
                   </div>
@@ -141,7 +141,7 @@ const GameArea = ({ deck, discardPile }) => {
           </div>
         </div>
       </div>
-      
+
       {/* Game Area Stats */}
       <div className="mt-6 pt-4 border-t border-white/20">
         <div className="grid grid-cols-3 gap-4 text-center text-sm">

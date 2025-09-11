@@ -161,8 +161,13 @@ const PlayerHand = ({
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
           {player.hand.map((card, index) => {
             // Check if this specific card can be played
-            const isRegularCard = card.type === 'regular';
-            const canPlayThisCard = cardsPlayable && isRegularCard;
+            const canPlayThisCard = cardsPlayable && (
+              card.type === 'skip' ||
+              card.type === 'shuffle' ||
+              card.type === 'attack' ||
+              card.type === 'favor' ||
+              card.type === 'cat'
+            );
 
             return (
               <div
@@ -213,7 +218,7 @@ const PlayerHand = ({
                     Click to play
                   </div>
                 )}
-                {cardsPlayable && !isRegularCard && (
+                {cardsPlayable && !canPlayThisCard && card.type !== 'exploding' && card.type !== 'defuse' && (
                   <div className="mt-1 text-xs text-gray-500 opacity-50">
                     Cannot play
                   </div>
