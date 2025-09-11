@@ -16,10 +16,14 @@ const PlayerHand = ({
   moves,
   deckCount,
   hasPendingExplodingKitten = false,
-  players = {} // Add players prop for target selection
+  players = {}, // Add players prop for target selection
+  gameState = {} // Add game state for favor handling
 }) => {
   const [showTargetSelection, setShowTargetSelection] = useState(false);
   const [pendingFavorCardIndex, setPendingFavorCardIndex] = useState(null);
+
+  // Check if this player needs to give a card for a favor
+  const needsToGiveFavorCard = gameState.pendingFavor && gameState.favorTarget === player?.id;
 
   console.log('PlayerHand render:', {
     player: player?.name,
@@ -29,6 +33,10 @@ const PlayerHand = ({
     canDrawCard,
     deckCount,
     hasPendingExplodingKitten,
+    needsToGiveFavorCard,
+    'gameState.pendingFavor': gameState.pendingFavor,
+    'gameState.favorTarget': gameState.favorTarget,
+    'player.id': player?.id,
     movesKeys: Object.keys(moves || {})
   });
 
@@ -39,6 +47,15 @@ const PlayerHand = ({
 
     if (!card) {
       console.log('No card at index:', cardIndex);
+      return;
+    }
+
+    // If we need to give a card for a favor, handle that instead
+    if (needsToGiveFavorCard) {
+      console.log('Giving card for favor:', cardIndex);
+      if (moves.giveFavorCard) {
+        moves.giveFavorCard(cardIndex);
+      }
       return;
     }
 
@@ -215,29 +232,42 @@ const PlayerHand = ({
       {player.hand && player.hand.length > 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
           {player.hand.map((card, index) => {
-            // Check if this specific card can be played
-            const canPlayThisCard = cardsPlayable && (
-              card.type === 'skip' ||
-              card.type === 'shuffle' ||
-              card.type === 'attack' ||
-              card.type === 'favor' ||
-              card.type === 'cat'
-            );
+            // Determine card interactivity based on current state
+            let canPlayThisCard, cardAction, cardBgStyle;
+
+            if (needsToGiveFavorCard) {
+              // In favor giving mode - all cards are selectable
+              canPlayThisCard = true;
+              cardAction = 'Click to give this card';
+              cardBgStyle = 'cursor-pointer hover:shadow-xl hover:scale-105 hover:bg-purple-50 hover:-translate-y-1 border-2 border-purple-300';
+            } else {
+              // Normal play mode - check if card can be played
+              canPlayThisCard = cardsPlayable && (
+                card.type === 'skip' ||
+                card.type === 'shuffle' ||
+                card.type === 'attack' ||
+                card.type === 'favor' ||
+                card.type === 'cat'
+              );
+              cardAction = card.type === 'favor' ? 'Click to choose target' : 'Click to play';
+              cardBgStyle = canPlayThisCard 
+                ? 'cursor-pointer hover:shadow-xl hover:scale-105 hover:bg-yellow-50 hover:-translate-y-1'
+                : 'cursor-not-allowed opacity-75';
+            }
 
             return (
               <div
                 key={card.id}
                 className={`
                   bg-white text-gray-800 rounded-lg p-3 text-center transition-all duration-200 transform
-                  ${canPlayThisCard
-                    ? 'cursor-pointer hover:shadow-xl hover:scale-105 hover:bg-yellow-50 hover:-translate-y-1'
-                    : 'cursor-not-allowed opacity-75'
-                  }
+                  ${cardBgStyle}
                   ${card.type === 'exploding'
                     ? 'border-2 border-red-500 bg-red-50'
                     : card.type === 'defuse'
                       ? 'border-2 border-green-500 bg-green-50'
-                      : 'border border-gray-200'
+                      : needsToGiveFavorCard 
+                        ? '' // border already set above
+                        : 'border border-gray-200'
                   }
                 `}
                 onClick={() => canPlayThisCard && handleCardPlay(index)}
@@ -269,11 +299,11 @@ const PlayerHand = ({
 
                 {/* Interactive State Indicator */}
                 {canPlayThisCard && (
-                  <div className="mt-1 text-xs text-blue-600 opacity-50">
-                    {card.type === 'favor' ? 'Click to choose target' : 'Click to play'}
+                  <div className={`mt-1 text-xs opacity-50 ${needsToGiveFavorCard ? 'text-purple-600' : 'text-blue-600'}`}>
+                    {cardAction}
                   </div>
                 )}
-                {cardsPlayable && !canPlayThisCard && card.type !== 'exploding' && card.type !== 'defuse' && (
+                {!needsToGiveFavorCard && cardsPlayable && !canPlayThisCard && card.type !== 'exploding' && card.type !== 'defuse' && (
                   <div className="mt-1 text-xs text-gray-500 opacity-50">
                     Cannot play
                   </div>
@@ -298,7 +328,9 @@ const PlayerHand = ({
       {player.hand && player.hand.length > 0 && (
         <div className="mt-4 text-center">
           <div className="text-xs opacity-60">
-            {cardsPlayable ? (
+            {needsToGiveFavorCard ? (
+              <>🤝 Choose a card to give away! • Click any card to give it to {gameState.players?.[gameState.pendingFavor]?.name || 'the requesting player'}</>
+            ) : cardsPlayable ? (
               <>Click cards to play them • Favor cards will ask you to choose a target • Draw a card to end your turn</>
             ) : (
               <>Wait for your turn to play cards</>

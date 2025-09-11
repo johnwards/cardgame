@@ -315,9 +315,18 @@ const ExplodingKittensGame = {
     giveFavorCard: ({ G, playerID }, cardIndex) => {
       console.log('=== GIVE FAVOR CARD MOVE CALLED ===');
       console.log('playerID:', playerID, 'cardIndex:', cardIndex);
+      console.log('G.pendingFavor:', G.pendingFavor);
+      console.log('G.favorTarget:', G.favorTarget);
+      console.log('typeof playerID:', typeof playerID);
+      console.log('typeof G.favorTarget:', typeof G.favorTarget);
+      console.log('Check: G.favorTarget !== playerID:', G.favorTarget !== playerID);
+      console.log('Check: parseInt(G.favorTarget) !== parseInt(playerID):', parseInt(G.favorTarget) !== parseInt(playerID));
+      console.log('Check: !G.pendingFavor:', !G.pendingFavor);
 
-      if (G.favorTarget !== playerID || !G.pendingFavor) {
+      // Fix type comparison issue
+      if (parseInt(G.favorTarget) !== parseInt(playerID) || !G.pendingFavor) {
         console.log('No pending favor for this player');
+        console.log('Expected: favorTarget should equal playerID and pendingFavor should exist');
         return INVALID_MOVE;
       }
 
@@ -491,12 +500,17 @@ const ExplodingKittensGame = {
             break;
 
           case CARD_TYPES.FAVOR:
-            // Target each alive player
-            alivePlayerIDs.forEach(targetID => {
-              if (G.players[targetID].hand.length > 0) {
-                moves.push({ move: 'playCard', args: [i, parseInt(targetID)] });
-              }
-            });
+            // For testing: Always target player 0 (human player) if they're alive and have cards
+            if (G.players[0] && !G.players[0].isEliminated && G.players[0].hand.length > 0) {
+              moves.push({ move: 'playCard', args: [i, 0] });
+            } else {
+              // Fallback: Target each alive player if player 0 is not available
+              alivePlayerIDs.forEach(targetID => {
+                if (G.players[targetID].hand.length > 0) {
+                  moves.push({ move: 'playCard', args: [i, parseInt(targetID)] });
+                }
+              });
+            }
             break;
 
           case CARD_TYPES.CAT: {
@@ -507,12 +521,17 @@ const ExplodingKittensGame = {
             );
 
             if (matchingCats.length >= 2) {
-              // Can play cat pair against each alive player
-              alivePlayerIDs.forEach(targetID => {
-                if (G.players[targetID].hand.length > 0) {
-                  moves.push({ move: 'playCatPair', args: [catName, parseInt(targetID)] });
-                }
-              });
+              // For testing: Prefer targeting player 0 (human player) if they're alive and have cards
+              if (G.players[0] && !G.players[0].isEliminated && G.players[0].hand.length > 0) {
+                moves.push({ move: 'playCatPair', args: [catName, 0] });
+              } else {
+                // Fallback: Can play cat pair against each alive player
+                alivePlayerIDs.forEach(targetID => {
+                  if (G.players[targetID].hand.length > 0) {
+                    moves.push({ move: 'playCatPair', args: [catName, parseInt(targetID)] });
+                  }
+                });
+              }
             }
             break;
           }

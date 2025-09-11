@@ -152,6 +152,23 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
                 </div>
               )}
 
+              {/* Pending Favor - Human player needs to give a card */}
+              {G.pendingFavor && G.favorTarget === playerID && (
+                <div className="mb-4 p-3 bg-purple-600 rounded-lg">
+                  <div className="font-bold">🤝 FAVOR REQUEST!</div>
+                  <div className="text-sm">{G.players[G.pendingFavor]?.name} played a Favor card on you!</div>
+                  <div className="text-sm">Choose a card from your hand to give them (look below).</div>
+                </div>
+              )}
+
+              {/* Pending Favor - Someone else needs to give a card */}
+              {G.pendingFavor && G.favorTarget !== playerID && (
+                <div className="mb-4 p-3 bg-purple-600/70 rounded-lg">
+                  <div className="font-bold">🤝 FAVOR IN PROGRESS</div>
+                  <div className="text-sm">{G.players[G.pendingFavor]?.name} is waiting for {G.players[G.favorTarget]?.name} to give them a card...</div>
+                </div>
+              )}
+
               {/* Check if human player was recently eliminated */}
               {humanPlayer.isEliminated && (
                 <div className="mb-4 p-3 bg-red-600 rounded-lg">
@@ -189,6 +206,7 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
               deckCount={G.deck?.length || 0}
               hasPendingExplodingKitten={G.pendingExplodingKitten && G.pendingPlayer === playerID}
               players={G.players} // Pass all players for target selection
+              gameState={G} // Pass game state for favor handling
             />
 
             {/* Exploding Kitten Placement Interface */}
