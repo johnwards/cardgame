@@ -1,12 +1,7 @@
-/**
- * App Component - Phase C Implementation
- * 
- * Phase A.1: Configured for exactly 4 players (1 human + 3 CPU) ✅
- * Phase C.2: Added AI configuration for CPU players ✅
- */
-
 import { Client } from 'boardgame.io/react';
 import ExplodingKittensGame from './game';
+import { Local } from 'boardgame.io/multiplayer';
+import { RandomBot, MCTSBot } from 'boardgame.io/ai';
 import GameBoard from './components/GameBoard';
 import './index.css';
 
@@ -15,7 +10,14 @@ const ExplodingKittensClient = Client({
   game: ExplodingKittensGame,
   board: GameBoard,
   numPlayers: 4, // Phase A: Force 4 players
-  debug: true
+  debug: true,
+  multiplayer: Local({
+    bots: {
+      '1': MCTSBot,  // Bot for player 1
+      '2': MCTSBot,    // Bot for player 2  
+      '3': MCTSBot   // Bot for player 3
+    }
+  }),
 });
 
 /**
