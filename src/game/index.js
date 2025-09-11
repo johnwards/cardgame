@@ -500,17 +500,12 @@ const ExplodingKittensGame = {
             break;
 
           case CARD_TYPES.FAVOR:
-            // For testing: Always target player 0 (human player) if they're alive and have cards
-            if (G.players[0] && !G.players[0].isEliminated && G.players[0].hand.length > 0) {
-              moves.push({ move: 'playCard', args: [i, 0] });
-            } else {
-              // Fallback: Target each alive player if player 0 is not available
-              alivePlayerIDs.forEach(targetID => {
-                if (G.players[targetID].hand.length > 0) {
-                  moves.push({ move: 'playCard', args: [i, parseInt(targetID)] });
-                }
-              });
-            }
+            // Target each alive player
+            alivePlayerIDs.forEach(targetID => {
+              if (G.players[targetID].hand.length > 0) {
+                moves.push({ move: 'playCard', args: [i, parseInt(targetID)] });
+              }
+            });
             break;
 
           case CARD_TYPES.CAT: {
@@ -521,17 +516,12 @@ const ExplodingKittensGame = {
             );
 
             if (matchingCats.length >= 2) {
-              // For testing: Prefer targeting player 0 (human player) if they're alive and have cards
-              if (G.players[0] && !G.players[0].isEliminated && G.players[0].hand.length > 0) {
-                moves.push({ move: 'playCatPair', args: [catName, 0] });
-              } else {
-                // Fallback: Can play cat pair against each alive player
-                alivePlayerIDs.forEach(targetID => {
-                  if (G.players[targetID].hand.length > 0) {
-                    moves.push({ move: 'playCatPair', args: [catName, parseInt(targetID)] });
-                  }
-                });
-              }
+              // Can play cat pair against each alive player
+              alivePlayerIDs.forEach(targetID => {
+                if (G.players[targetID].hand.length > 0) {
+                  moves.push({ move: 'playCatPair', args: [catName, parseInt(targetID)] });
+                }
+              });
             }
             break;
           }

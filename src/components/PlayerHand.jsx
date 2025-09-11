@@ -250,7 +250,7 @@ const PlayerHand = ({
                 card.type === 'cat'
               );
               cardAction = card.type === 'favor' ? 'Click to choose target' : 'Click to play';
-              cardBgStyle = canPlayThisCard 
+              cardBgStyle = canPlayThisCard
                 ? 'cursor-pointer hover:shadow-xl hover:scale-105 hover:bg-yellow-50 hover:-translate-y-1'
                 : 'cursor-not-allowed opacity-75';
             }
@@ -265,7 +265,7 @@ const PlayerHand = ({
                     ? 'border-2 border-red-500 bg-red-50'
                     : card.type === 'defuse'
                       ? 'border-2 border-green-500 bg-green-50'
-                      : needsToGiveFavorCard 
+                      : needsToGiveFavorCard
                         ? '' // border already set above
                         : 'border border-gray-200'
                   }
