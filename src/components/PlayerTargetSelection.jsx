@@ -5,11 +5,11 @@
  * with Favor cards or other targeted actions.
  */
 
-const PlayerTargetSelection = ({ 
-  players, 
-  currentPlayerID, 
-  onSelectTarget, 
-  onCancel, 
+const PlayerTargetSelection = ({
+  players,
+  currentPlayerID,
+  onSelectTarget,
+  onCancel,
   title = "Choose Player to Target",
   description = "Select which player you want to target:"
 }) => {
@@ -20,9 +20,9 @@ const PlayerTargetSelection = ({
   });
 
   // Get all valid target players (alive, not current player, have cards)
-  const validTargets = Object.values(players || {}).filter(player => 
-    player.id !== parseInt(currentPlayerID) && 
-    !player.isEliminated && 
+  const validTargets = Object.values(players || {}).filter(player =>
+    player.id !== parseInt(currentPlayerID) &&
+    !player.isEliminated &&
     player.hand.length > 0
   );
 
@@ -73,7 +73,7 @@ const PlayerTargetSelection = ({
                 <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
                   {player.isCPU ? '🤖' : '👤'}
                 </div>
-                
+
                 {/* Player Info */}
                 <div className="text-left">
                   <div className="font-bold text-gray-800">{player.name}</div>

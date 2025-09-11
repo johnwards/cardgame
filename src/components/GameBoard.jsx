@@ -92,8 +92,8 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
                 <div
                   key={player.id}
                   className={`mb-4 p-3 rounded transition-all duration-300 ${ctx.currentPlayer == player.id
-                      ? 'bg-yellow-500/30 border-2 border-yellow-400'
-                      : 'bg-white/10'
+                    ? 'bg-yellow-500/30 border-2 border-yellow-400'
+                    : 'bg-white/10'
                     }`}
                 >
                   <div className="font-bold flex items-center gap-2">

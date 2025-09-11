@@ -36,7 +36,7 @@ const PlayerHand = ({
   const handleCardPlay = (cardIndex) => {
     console.log('handleCardPlay called:', cardIndex);
     const card = player?.hand?.[cardIndex];
-    
+
     if (!card) {
       console.log('No card at index:', cardIndex);
       return;
@@ -63,12 +63,12 @@ const PlayerHand = ({
   const handleTargetSelection = (targetPlayerID) => {
     console.log('Target selected for favor:', targetPlayerID);
     setShowTargetSelection(false);
-    
+
     if (pendingFavorCardIndex !== null && moves.playCard) {
       console.log('Playing favor card with target:', pendingFavorCardIndex, targetPlayerID);
       moves.playCard(pendingFavorCardIndex, targetPlayerID);
     }
-    
+
     setPendingFavorCardIndex(null);
   };
 

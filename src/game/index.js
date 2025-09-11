@@ -126,7 +126,7 @@ const ExplodingKittensGame = {
             return INVALID_MOVE;
           }
           console.log('Favor card played - requesting card from player', targetPlayerID);
-          
+
           // For CPU players, immediately give a random card
           if (G.players[targetPlayerID].isCPU) {
             console.log('Target is CPU, immediately giving random card');
