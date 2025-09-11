@@ -13,9 +13,9 @@ const ExplodingKittensClient = Client({
   debug: true,
   multiplayer: Local({
     bots: {
-      '1': MCTSBot,  // Bot for player 1
-      '2': MCTSBot,    // Bot for player 2  
-      '3': MCTSBot   // Bot for player 3
+      '1': RandomBot,  // Bot for player 1
+      '2': RandomBot,    // Bot for player 2  
+      '3': RandomBot   // Bot for player 3
     }
   }),
 });
