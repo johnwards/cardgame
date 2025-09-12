@@ -7,11 +7,11 @@
 
 import { useState } from 'react';
 
-const CatPairSelection = ({ 
+const CatPairSelection = ({
   catPair,
-  players, 
-  currentPlayerID, 
-  onSelectTarget, 
+  players,
+  currentPlayerID,
+  onSelectTarget,
   onCancel
 }) => {
   const [selectedTarget, setSelectedTarget] = useState(null);
@@ -25,9 +25,9 @@ const CatPairSelection = ({
   });
 
   // Get all valid target players (alive, not current player, have cards)
-  const validTargets = Object.values(players || {}).filter(player => 
-    player.id !== parseInt(currentPlayerID) && 
-    !player.isEliminated && 
+  const validTargets = Object.values(players || {}).filter(player =>
+    player.id !== parseInt(currentPlayerID) &&
+    !player.isEliminated &&
     player.hand.length > 0
   );
 
@@ -68,7 +68,7 @@ const CatPairSelection = ({
 
   if (showCardSelection && selectedTarget !== null) {
     const targetPlayer = players[selectedTarget];
-    
+
     return (
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
         <div className="bg-white rounded-lg p-6 max-w-2xl mx-4">
@@ -151,7 +151,7 @@ const CatPairSelection = ({
                 <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
                   {player.isCPU ? '🤖' : '👤'}
                 </div>
-                
+
                 {/* Player Info */}
                 <div className="text-left">
                   <div className="font-bold text-gray-800">{player.name}</div>

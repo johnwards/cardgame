@@ -31,7 +31,7 @@ const PlayerHand = ({
   // Find available cat pairs
   const findCatPairs = () => {
     if (!player?.hand) return [];
-    
+
     const catGroups = {};
     player.hand.forEach((card, index) => {
       if (card.type === 'cat') {
@@ -103,7 +103,7 @@ const PlayerHand = ({
       console.log('Cat card clicked, checking for pairs');
       const pairs = findCatPairs();
       const matchingPair = pairs.find(pair => pair.catName === card.name);
-      
+
       if (matchingPair) {
         console.log('Found matching cat pair for:', card.name);
         setAvailableCatPairs([matchingPair]);
@@ -148,14 +148,14 @@ const PlayerHand = ({
   const handleCatPairTargetSelection = (targetPlayerID, cardIndex) => {
     console.log('Cat pair target and card selected:', targetPlayerID, cardIndex);
     setShowCatPairSelection(false);
-    
+
     if (availableCatPairs.length > 0 && moves.playCatPair) {
       const catPair = availableCatPairs[0];
       console.log('Playing cat pair:', catPair.catName, 'against player', targetPlayerID);
       // Note: cardIndex is not used in the current game logic, it picks random
       moves.playCatPair(catPair.catName, targetPlayerID);
     }
-    
+
     setAvailableCatPairs([]);
   };
 
@@ -332,11 +332,14 @@ const PlayerHand = ({
                 card.type === 'shuffle' ||
                 card.type === 'attack' ||
                 card.type === 'favor' ||
+                card.type === 'see_future' ||
                 card.type === 'cat'
               );
-              
+
               if (card.type === 'favor') {
                 cardAction = 'Click to choose target';
+              } else if (card.type === 'see_future') {
+                cardAction = 'Click to see future';
               } else if (card.type === 'cat' && hasPair) {
                 cardAction = 'Click to play pair';
               } else if (card.type === 'cat') {

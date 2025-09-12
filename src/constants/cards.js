@@ -14,6 +14,7 @@ export const CARD_TYPES = {
   FAVOR: 'favor',
   SHUFFLE: 'shuffle',
   ATTACK: 'attack',
+  SEE_FUTURE: 'see_future',
   CAT: 'cat'
 };
 
@@ -27,6 +28,7 @@ export const PHASE1_DECK_CONFIG = {
   [CARD_TYPES.FAVOR]: 4,
   [CARD_TYPES.SHUFFLE]: 4,
   [CARD_TYPES.ATTACK]: 4,
+  [CARD_TYPES.SEE_FUTURE]: 4,
   [CARD_TYPES.CAT]: 12       // 3 different types, 4 of each
 };
 
@@ -157,6 +159,23 @@ export function createAttackCards() {
 }
 
 /**
+ * Creates all See the Future cards for the game
+ * @returns {Array} Array of See the Future card objects
+ */
+export function createSeeTheFutureCards() {
+  const cards = [];
+  for (let i = 0; i < PHASE1_DECK_CONFIG[CARD_TYPES.SEE_FUTURE]; i++) {
+    cards.push(createCard(
+      CARD_TYPES.SEE_FUTURE,
+      'See the Future',
+      '🔮',
+      'Secretly view the top 3 cards of the deck'
+    ));
+  }
+  return cards;
+}
+
+/**
  * Creates all Cat cards for the game
  * @returns {Array} Array of Cat card objects
  */
@@ -195,6 +214,7 @@ export function createInitialDeck() {
     ...createFavorCards(),
     ...createShuffleCards(),
     ...createAttackCards(),
+    ...createSeeTheFutureCards(),
     ...createCatCards()
   ];
 
@@ -259,6 +279,7 @@ export function setupGameDeck(numPlayers = 4, random) {
     card.type === CARD_TYPES.FAVOR ||
     card.type === CARD_TYPES.SHUFFLE ||
     card.type === CARD_TYPES.ATTACK ||
+    card.type === CARD_TYPES.SEE_FUTURE ||
     card.type === CARD_TYPES.CAT
   );
 

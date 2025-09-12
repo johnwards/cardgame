@@ -47,7 +47,9 @@ const ExplodingKittensGame = {
       pendingPlayer: null, // Player who needs to place the exploding kitten
       turnsRemaining: {}, // Track extra turns from Attack cards
       pendingFavor: null, // Track pending favor requests
-      favorTarget: null   // Target player for favor
+      favorTarget: null,   // Target player for favor
+      seeTheFutureCards: null, // Cards revealed by See the Future
+      seeTheFuturePlayer: null // Player who can see the future cards
     };
 
     console.log('Phase C Setup complete:');
@@ -144,6 +146,19 @@ const ExplodingKittensGame = {
 
         case CARD_TYPES.CAT:
           console.log('Cat card played - but no special effect for single cat');
+          break;
+
+        case CARD_TYPES.SEE_FUTURE:
+          console.log('See the Future card played');
+          // For human players, store the top 3 cards to show them
+          if (!G.players[playerID].isCPU) {
+            const futureCards = G.deck.slice(-3).reverse(); // Top 3 cards (next to be drawn first)
+            G.seeTheFutureCards = futureCards;
+            G.seeTheFuturePlayer = playerID;
+            console.log('Human player can see future cards:', futureCards.map(c => c.name));
+          } else {
+            console.log('CPU player used See the Future - no effect for AI');
+          }
           break;
 
         default:
@@ -397,6 +412,23 @@ const ExplodingKittensGame = {
 
       console.log('Cat pair played - stolen card:', stolenCard.name);
       console.log('=== PLAY CAT PAIR COMPLETE ===');
+    },
+
+    dismissSeeTheFuture: ({ G, playerID }) => {
+      console.log('=== DISMISS SEE THE FUTURE MOVE CALLED ===');
+      console.log('playerID:', playerID);
+
+      if (G.seeTheFuturePlayer !== playerID) {
+        console.log('No see the future active for this player');
+        return INVALID_MOVE;
+      }
+
+      // Clear the see the future state
+      G.seeTheFutureCards = null;
+      G.seeTheFuturePlayer = null;
+
+      console.log('See the Future dismissed');
+      console.log('=== DISMISS SEE THE FUTURE COMPLETE ===');
     }
   },
 
@@ -496,6 +528,7 @@ const ExplodingKittensGame = {
           case CARD_TYPES.SKIP:
           case CARD_TYPES.SHUFFLE:
           case CARD_TYPES.ATTACK:
+          case CARD_TYPES.SEE_FUTURE:
             moves.push({ move: 'playCard', args: [i] });
             break;
 
