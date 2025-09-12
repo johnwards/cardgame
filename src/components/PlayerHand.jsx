@@ -18,7 +18,8 @@ const PlayerHand = ({
   deckCount,
   hasPendingExplodingKitten = false,
   players = {}, // Add players prop for target selection
-  gameState = {} // Add game state for favor handling
+  gameState = {}, // Add game state for favor handling
+  onGiveFavorCard // Add handler for giving favor cards directly
 }) => {
   const [showTargetSelection, setShowTargetSelection] = useState(false);
   const [pendingFavorCardIndex, setPendingFavorCardIndex] = useState(null);
@@ -81,11 +82,16 @@ const PlayerHand = ({
       return;
     }
 
-    // If we need to give a card for a favor, handle that instead
+    // If we need to give a card for a favor, handle it directly (not a boardgame.io move)
     if (needsToGiveFavorCard) {
-      console.log('Giving card for favor:', cardIndex);
-      if (moves.giveFavorCard) {
-        moves.giveFavorCard(cardIndex);
+      console.log('Giving card for favor directly:', cardIndex);
+
+      // This should be handled by directly updating the game state
+      // Pass the card selection back to the parent component
+      if (onGiveFavorCard) {
+        onGiveFavorCard(cardIndex);
+      } else {
+        console.log('No onGiveFavorCard handler provided');
       }
       return;
     }
@@ -437,7 +443,7 @@ const PlayerHand = ({
         <div className="mt-4 text-center">
           <div className="text-xs opacity-60">
             {needsToGiveFavorCard ? (
-              <>🤝 Choose a card to give away! • Click any card to give it to {gameState.players?.[gameState.pendingFavor]?.name || 'the requesting player'}</>
+              <>🤝 Choose a card to give away! • Click any card to complete the favor for {gameState.players?.[gameState.pendingFavor]?.name || 'the requesting player'}</>
             ) : cardsPlayable ? (
               <>Click cards to play them • Favor cards will ask you to choose a target • Draw a card to end your turn</>
             ) : (

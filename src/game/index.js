@@ -13,6 +13,9 @@
 import { INVALID_MOVE } from 'boardgame.io/core';
 import { setupGameDeck, CARD_TYPES, findCatPairs } from '../constants/cards.js';
 
+// Global variable for favor card selection (simple solution)
+let globalSelectedFavorCard = null;
+
 console.log('Game file loading...');
 
 const ExplodingKittensGame = {
@@ -48,6 +51,7 @@ const ExplodingKittensGame = {
       turnsRemaining: {}, // Track extra turns from Attack cards
       pendingFavor: null, // Track pending favor requests
       favorTarget: null,   // Target player for favor
+      waitingForFavor: null, // Player who is waiting for a favor to be completed
       seeTheFutureCards: null, // Cards revealed by See the Future
       seeTheFuturePlayer: null // Player who can see the future cards
     };
@@ -65,6 +69,12 @@ const ExplodingKittensGame = {
     playCard: ({ G, playerID, events, random }, cardIndex, targetPlayerID) => {
       console.log('=== PLAYCARD MOVE CALLED ===');
       console.log('playerID:', playerID, 'cardIndex:', cardIndex, 'targetPlayerID:', targetPlayerID);
+
+      // Block other card plays if there's a pending favor that needs to be resolved
+      if (G.pendingFavor && G.favorTarget && G.favorTarget !== playerID) {
+        console.log('Cannot play cards while favor is pending for another player');
+        return INVALID_MOVE;
+      }
 
       // Validate card index
       if (cardIndex < 0 || cardIndex >= G.players[playerID].hand.length) {
@@ -129,7 +139,7 @@ const ExplodingKittensGame = {
           }
           console.log('Favor card played - requesting card from player', targetPlayerID);
 
-          // For CPU players, immediately give a random card
+          // For CPU players, immediately give a random card and complete the move
           if (G.players[targetPlayerID].isCPU) {
             console.log('Target is CPU, immediately giving random card');
             const targetHand = G.players[targetPlayerID].hand;
@@ -139,8 +149,11 @@ const ExplodingKittensGame = {
             console.log('CPU gave card:', givenCard.name);
           } else {
             // For human players, set up pending favor state
+            // The current player (AI) will be stuck waiting until human responds
             G.pendingFavor = playerID;
             G.favorTarget = targetPlayerID;
+            G.waitingForFavor = playerID; // Mark this player as waiting for favor
+            console.log('AI player', playerID, 'is now waiting for favor from human', targetPlayerID);
           }
           break;
 
@@ -173,6 +186,12 @@ const ExplodingKittensGame = {
     drawCard: ({ G, playerID, events }) => {
       console.log('=== DRAWCARD MOVE CALLED ===');
       console.log('playerID:', playerID);
+
+      // Block drawing if there's a pending favor that needs to be resolved
+      if (G.pendingFavor && G.favorTarget && G.favorTarget !== playerID) {
+        console.log('Cannot draw cards while favor is pending for another player');
+        return INVALID_MOVE;
+      }
 
       if (G.deck.length === 0) {
         console.log('Deck empty, invalid move');
@@ -327,40 +346,7 @@ const ExplodingKittensGame = {
       console.log('=== PLACE EXPLODING KITTEN COMPLETE ===');
     },
 
-    giveFavorCard: ({ G, playerID }, cardIndex) => {
-      console.log('=== GIVE FAVOR CARD MOVE CALLED ===');
-      console.log('playerID:', playerID, 'cardIndex:', cardIndex);
-      console.log('G.pendingFavor:', G.pendingFavor);
-      console.log('G.favorTarget:', G.favorTarget);
-      console.log('typeof playerID:', typeof playerID);
-      console.log('typeof G.favorTarget:', typeof G.favorTarget);
-      console.log('Check: G.favorTarget !== playerID:', G.favorTarget !== playerID);
-      console.log('Check: parseInt(G.favorTarget) !== parseInt(playerID):', parseInt(G.favorTarget) !== parseInt(playerID));
-      console.log('Check: !G.pendingFavor:', !G.pendingFavor);
 
-      // Fix type comparison issue
-      if (parseInt(G.favorTarget) !== parseInt(playerID) || !G.pendingFavor) {
-        console.log('No pending favor for this player');
-        console.log('Expected: favorTarget should equal playerID and pendingFavor should exist');
-        return INVALID_MOVE;
-      }
-
-      if (cardIndex < 0 || cardIndex >= G.players[playerID].hand.length) {
-        console.log('Invalid card index');
-        return INVALID_MOVE;
-      }
-
-      const card = G.players[playerID].hand.splice(cardIndex, 1)[0];
-      G.players[G.pendingFavor].hand.push(card);
-
-      console.log('Favor completed - card given to player', G.pendingFavor);
-
-      // Clear favor state
-      G.pendingFavor = null;
-      G.favorTarget = null;
-
-      console.log('=== GIVE FAVOR CARD COMPLETE ===');
-    },
 
     playCatPair: ({ G, playerID, random }, catName, targetPlayerID) => {
       console.log('=== PLAY CAT PAIR MOVE CALLED ===');
@@ -429,6 +415,49 @@ const ExplodingKittensGame = {
 
       console.log('See the Future dismissed');
       console.log('=== DISMISS SEE THE FUTURE COMPLETE ===');
+    },
+
+    waitingForFavor: ({ G, playerID }) => {
+      console.log('=== WAITING FOR FAVOR MOVE CALLED ===');
+      console.log('playerID:', playerID, 'is waiting for favor');
+      console.log('waitingForFavor state:', G.waitingForFavor);
+      console.log('globalSelectedFavorCard:', globalSelectedFavorCard);
+
+      // If human has selected a card, complete the favor
+      if (globalSelectedFavorCard !== null && globalSelectedFavorCard !== undefined) {
+        console.log('Human selected card index:', globalSelectedFavorCard);
+
+        const targetPlayerID = G.favorTarget;
+        const favorRequesterID = G.pendingFavor;
+
+        // Validate the selected card
+        if (globalSelectedFavorCard < 0 || globalSelectedFavorCard >= G.players[targetPlayerID].hand.length) {
+          console.log('Invalid selected card index');
+          globalSelectedFavorCard = null; // Reset invalid selection
+          return;
+        }
+
+        // Transfer the card
+        const card = G.players[targetPlayerID].hand.splice(globalSelectedFavorCard, 1)[0];
+        G.players[favorRequesterID].hand.push(card);
+
+        console.log('FAVOR COMPLETED! Card transferred:', card.name);
+        console.log('From player', targetPlayerID, 'to player', favorRequesterID);
+
+        // Clear favor state and global variable
+        G.pendingFavor = null;
+        G.favorTarget = null;
+        G.waitingForFavor = null;
+        globalSelectedFavorCard = null; // Reset for next time
+
+        console.log('Favor state cleared - AI can now make normal moves');
+        return;
+      }
+
+      // Still waiting for human to select a card
+      console.log('Still waiting for human to select card...');
+
+      console.log('=== WAITING FOR FAVOR COMPLETE ===');
     }
   },
 
@@ -482,6 +511,13 @@ const ExplodingKittensGame = {
 
       console.log('CPU player', playerID, 'is active, generating moves...');
 
+      // If this AI player is waiting for a favor, they can only wait
+      if (G.waitingForFavor === playerID) {
+        console.log('AI player', playerID, 'is waiting for favor - can only make waitingForFavor move');
+        moves.push({ move: 'waitingForFavor', args: [] });
+        return moves;
+      }
+
       // Handle pending exploding kitten placement first
       if (G.pendingExplodingKitten && G.pendingPlayer === playerID) {
         console.log('CPU needs to place exploding kitten');
@@ -493,24 +529,8 @@ const ExplodingKittensGame = {
         return moves;
       }
 
-      // Handle pending favor
-      if (G.favorTarget === playerID && G.pendingFavor !== null) {
-        console.log('CPU needs to give favor card');
-        const hand = G.players[playerID].hand;
-        for (let i = 0; i < hand.length; i++) {
-          // Prefer giving non-defuse cards
-          if (hand[i].type !== CARD_TYPES.DEFUSE) {
-            moves.push({ move: 'giveFavorCard', args: [i] });
-          }
-        }
-        // If only defuse cards, give one anyway
-        if (moves.length === 0) {
-          for (let i = 0; i < hand.length; i++) {
-            moves.push({ move: 'giveFavorCard', args: [i] });
-          }
-        }
-        return moves;
-      }
+      // CPUs should never be in pending favor state since they give cards immediately
+      // No need to handle giveFavorCard moves for AI players
 
       const player = G.players[playerID];
       console.log('CPU player', playerID, 'hand size:', player.hand.length);
@@ -580,5 +600,10 @@ const ExplodingKittensGame = {
 };
 
 console.log('Game definition created');
+
+// Export setter function for global variable
+export const setGlobalSelectedFavorCard = (cardIndex) => {
+  globalSelectedFavorCard = cardIndex;
+};
 
 export default ExplodingKittensGame;

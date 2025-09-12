@@ -2,7 +2,11 @@ import PlayerHand from './PlayerHand';
 import SeeTheFutureModal from './SeeTheFutureModal';
 import GameOverModal from './GameOverModal';
 
+// Import global variable setter from game file
+import { setGlobalSelectedFavorCard } from '../game/index';
+
 const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
+
   // Debug logging to understand the issue
   console.log('GameBoard render - SIMPLIFIED DEBUG');
   console.log('playerID:', playerID);
@@ -48,6 +52,16 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
   if (!humanPlayer) {
     return <div className="p-8 text-red-600">Error: humanPlayer is null or undefined</div>;
   }
+
+  // No need for enhanced moves since completeFavor is now a proper game move
+
+  // Handler for when human selects a card for favor (store in global variable)
+  const handleGiveFavorCard = (cardIndex) => {
+    console.log('=== STORING SELECTED FAVOR CARD ===');
+    console.log('cardIndex:', cardIndex);
+    setGlobalSelectedFavorCard(cardIndex);
+    console.log('Card stored in global variable, waitingForFavor will pick it up');
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-800 to-blue-900 p-4">
@@ -205,6 +219,7 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
               hasPendingExplodingKitten={G.pendingExplodingKitten && G.pendingPlayer === playerID}
               players={G.players} // Pass all players for target selection
               gameState={G} // Pass game state for favor handling
+              onGiveFavorCard={handleGiveFavorCard} // Pass handler for direct favor completion
             />
 
             {/* Exploding Kitten Placement Interface */}
