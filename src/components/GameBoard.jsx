@@ -1,5 +1,6 @@
 import PlayerHand from './PlayerHand';
 import SeeTheFutureModal from './SeeTheFutureModal';
+import GameOverModal from './GameOverModal';
 
 const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
   // Debug logging to understand the issue
@@ -51,6 +52,15 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-800 to-blue-900 p-4">
       <div className="max-w-6xl mx-auto">
+        {/* Game Over Modal */}
+        <GameOverModal
+          isVisible={!!ctx.gameover}
+          winner={ctx.gameover?.winner}
+          winnerName={ctx.gameover?.winnerName}
+          reason={ctx.gameover?.reason}
+          onNewGame={() => window.location.reload()}
+        />
+
         {/* See the Future Modal */}
         {G.seeTheFutureCards && G.seeTheFuturePlayer === playerID && (
           <SeeTheFutureModal
@@ -70,27 +80,6 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
             <div className="text-sm">Is Active: {isActive ? 'YES' : 'NO'}</div>
           </div>
         </div>
-
-        {/* Game Over Display */}
-        {ctx.gameover && (
-          <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg p-8 mb-6 text-white text-center">
-            <h2 className="text-3xl font-bold mb-4">🎉 Game Over! 🎉</h2>
-            {ctx.gameover.winner && (
-              <div>
-                <p className="text-xl mb-2">
-                  Winner: <span className="font-bold">{ctx.gameover.winnerName || `Player ${ctx.gameover.winner}`}</span>
-                </p>
-                <p className="text-lg opacity-90">{ctx.gameover.reason}</p>
-              </div>
-            )}
-            <button
-              onClick={() => window.location.reload()}
-              className="mt-4 bg-white text-purple-600 font-bold py-2 px-6 rounded-lg hover:bg-gray-100 transition-colors"
-            >
-              New Game
-            </button>
-          </div>
-        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Other Players Panel */}
