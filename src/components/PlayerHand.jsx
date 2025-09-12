@@ -224,11 +224,11 @@ const PlayerHand = ({
       )}
 
       {/* Player Header */}
-      <div className="bg-white/20 backdrop-blur-md text-white p-3 lg:p-4 border-b border-white/20">
+      <div className="bg-white/20 backdrop-blur-md text-white p-2 md:p-3 lg:p-4 border-b border-white/20">
         <div className="flex justify-between items-center">
-          <h2 className="text-lg lg:text-xl font-black text-white drop-shadow-lg">YOUR HAND</h2>
+          <h2 className="text-sm md:text-lg lg:text-xl font-black text-white drop-shadow-lg">YOUR HAND</h2>
           <div className="text-right">
-            <div className="text-base lg:text-lg font-bold text-white drop-shadow-lg">{player.hand?.length || 0} CARDS</div>
+            <div className="text-sm md:text-base lg:text-lg font-bold text-white drop-shadow-lg">{player.hand?.length || 0} CARDS</div>
             {player.isEliminated && (
               <div className="text-red-400 text-xs lg:text-sm font-bold">💀 ELIMINATED</div>
             )}
@@ -237,12 +237,12 @@ const PlayerHand = ({
       </div>
 
       {/* Turn Status & Draw Button */}
-      <div className="bg-white/10 backdrop-blur-sm p-3 lg:p-4 border-b border-white/20">
-        <div className="flex flex-col gap-2 lg:gap-3">
+      <div className="bg-white/10 backdrop-blur-sm p-2 md:p-3 lg:p-4 border-b border-white/20">
+        <div className="flex flex-col gap-1 md:gap-2 lg:gap-3">
 
           {/* Turn Indicator */}
           <div className={`
-            text-center py-2 px-3 lg:px-4 rounded-full font-bold text-xs lg:text-sm border backdrop-blur-sm
+            text-center py-1 md:py-2 px-2 md:px-3 lg:px-4 rounded-full font-bold text-xs lg:text-sm border backdrop-blur-sm
             ${isCurrentPlayer && isActive
               ? 'bg-green-500/80 text-white border-green-400 animate-gentle-pulse'
               : 'bg-gray-600/80 text-gray-200 border-gray-500'
@@ -262,7 +262,7 @@ const PlayerHand = ({
             onClick={handleDrawCard}
             disabled={!drawEnabled}
             className={`
-              w-full py-3 lg:py-4 rounded-xl font-black text-base lg:text-lg transition-all duration-200 transform border backdrop-blur-sm
+              w-full py-2 md:py-3 lg:py-4 rounded-xl font-black text-sm md:text-base lg:text-lg transition-all duration-200 transform border backdrop-blur-sm
               ${drawEnabled
                 ? 'bg-blue-600/90 hover:bg-blue-700/90 text-white border-blue-400 hover:scale-105 shadow-lg cursor-pointer'
                 : 'bg-gray-600/60 text-gray-300 border-gray-500 cursor-not-allowed opacity-50'
@@ -276,7 +276,7 @@ const PlayerHand = ({
           </button>
         </div>
       </div>      {/* Cards Section */}
-      <div className="flex-1 p-3 lg:p-4 overflow-y-auto">
+      <div className="flex-1 p-2 md:p-3 lg:p-4 overflow-y-auto">
         {player.hand && player.hand.length > 0 ? (
           <>
             {/* Special Instructions */}
@@ -331,7 +331,7 @@ const PlayerHand = ({
                   <div
                     key={card.id}
                     className={`
-                      bg-white text-gray-800 rounded-lg p-2 lg:p-3 text-center transition-all duration-200 transform hover:scale-105 hover:shadow-lg hand-card
+                      bg-white text-gray-800 rounded-lg p-1 md:p-2 lg:p-3 text-center transition-all duration-200 transform hover:scale-105 hover:shadow-lg hand-card
                       ${cardBgStyle}
                       ${card.type === 'exploding'
                         ? 'border-2 border-red-500 bg-red-50'
@@ -346,7 +346,7 @@ const PlayerHand = ({
                     `}
                     onClick={() => canPlayThisCard && handleCardPlay(index)}
                   >
-                    <div className="text-xl lg:text-2xl mb-1">{card.emoji}</div>
+                    <div className="text-lg md:text-xl lg:text-2xl mb-1">{card.emoji}</div>
 
                     <div className="font-bold text-xs leading-tight mobile-compact-text">
                       {card.name}

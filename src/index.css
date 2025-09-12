@@ -612,3 +612,40 @@ button,
     font-size: 1.25rem !important;
   }
 }
+
+/* Extra optimizations for very small mobile landscape heights */
+@media screen and (max-height: 400px) and (orientation: landscape) {
+  /* Make everything even more compact for very small screens */
+  .mobile-header {
+    padding: 0.25rem 0.5rem !important;
+  }
+  
+  .mobile-header h1 {
+    font-size: 1rem !important;
+  }
+  
+  .center-game-card {
+    padding: 0.5rem !important;
+  }
+  
+  .center-game-card .text-2xl {
+    font-size: 1rem !important;
+  }
+  
+  .center-game-card .text-sm {
+    font-size: 0.6rem !important;
+  }
+  
+  .hand-card {
+    padding: 0.25rem !important;
+    min-height: auto !important;
+  }
+  
+  .hand-card .text-lg {
+    font-size: 1rem !important;
+  }
+  
+  .hand-card .text-xs {
+    font-size: 0.6rem !important;
+  }
+}

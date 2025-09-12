@@ -86,11 +86,11 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
       )}
 
       {/* Compact Top Header */}
-      <div className="bg-white/20 backdrop-blur-md text-white px-6 py-4 border-b border-white/20 shadow-lg mobile-header">
+      <div className="bg-white/20 backdrop-blur-md text-white px-2 md:px-6 py-2 md:py-4 border-b border-white/20 shadow-lg mobile-header">
         <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2 lg:gap-4">
-            <h1 className="text-xl lg:text-2xl font-black tracking-wide text-white drop-shadow-lg">💥 EXPLODING KITTENS 💥</h1>
-            <div className="bg-white/20 backdrop-blur-sm px-2 lg:px-3 py-1 rounded-full text-xs lg:text-sm font-bold border border-white/30">
+          <div className="flex items-center gap-1 md:gap-2 lg:gap-4">
+            <h1 className="text-lg md:text-xl lg:text-2xl font-black tracking-wide text-white drop-shadow-lg">💥 EXPLODING KITTENS 💥</h1>
+            <div className="bg-white/20 backdrop-blur-sm px-1 md:px-2 lg:px-3 py-1 rounded-full text-xs lg:text-sm font-bold border border-white/30">
               Turn {ctx.turn}
             </div>
           </div>
@@ -104,11 +104,11 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
       </div>
 
       {/* Main Game Layout */}
-      <div className="flex h-[calc(100vh-80px)]">
+      <div className="flex h-[calc(100vh-64px)] md:h-[calc(100vh-80px)]">
 
         {/* Left Sidebar - CPU Players */}
-        <div className="w-80 bg-black/10 backdrop-blur-sm border-r-4 border-yellow-400/50 p-4 overflow-y-auto">
-          <h2 className="text-xl font-black text-white text-center mb-4 bg-purple-600/50 rounded-full py-2">
+        <div className="w-48 md:w-64 lg:w-80 bg-black/10 backdrop-blur-sm border-r-4 border-yellow-400/50 p-2 md:p-4 overflow-y-auto">
+          <h2 className="text-sm md:text-xl font-black text-white text-center mb-2 md:mb-4 bg-purple-600/50 rounded-full py-1 md:py-2">
             🤖 CPU PLAYERS
           </h2>
           {Object.values(G.players).filter(p => p.id !== parseInt(playerID)).map(player => (
@@ -213,33 +213,33 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
 
           {/* Main Deck Area */}
           <div className="flex-1 flex items-center justify-center bg-black/10 backdrop-blur-sm">
-            <div className="flex items-center gap-8 lg:gap-16 center-game-cards">
+            <div className="flex items-center gap-4 md:gap-8 lg:gap-16 center-game-cards">
 
               {/* Draw Pile */}
               <div className="text-center group">
-                <div className="bg-white rounded-2xl p-4 lg:p-8 shadow-2xl transform group-hover:scale-105 transition-all duration-300 border-4 border-blue-400 center-game-card">
-                  <div className="text-4xl lg:text-6xl mb-2 lg:mb-4">🎴</div>
-                  <div className="text-gray-800 font-black text-base lg:text-xl">DRAW PILE</div>
-                  <div className="text-blue-600 font-bold text-sm lg:text-lg">{G.deck?.length || 0} CARDS</div>
+                <div className="bg-white rounded-2xl p-3 md:p-4 lg:p-8 shadow-2xl transform group-hover:scale-105 transition-all duration-300 border-4 border-blue-400 center-game-card">
+                  <div className="text-2xl md:text-4xl lg:text-6xl mb-1 md:mb-2 lg:mb-4">🎴</div>
+                  <div className="text-gray-800 font-black text-sm md:text-base lg:text-xl">DRAW PILE</div>
+                  <div className="text-blue-600 font-bold text-xs md:text-sm lg:text-lg">{G.deck?.length || 0} CARDS</div>
                 </div>
               </div>
 
               {/* VS Divider */}
               <div className="text-center vs-divider">
-                <div className="text-4xl lg:text-6xl text-white/50 font-black transform rotate-12 animate-spin-slow">
+                <div className="text-2xl md:text-4xl lg:text-6xl text-white/50 font-black transform rotate-12 animate-spin-slow">
                   ⚡
                 </div>
               </div>
 
               {/* Discard Pile */}
               <div className="text-center group">
-                <div className="bg-white rounded-2xl p-4 lg:p-8 shadow-2xl transform group-hover:scale-105 transition-all duration-300 border-4 border-orange-400 center-game-card">
-                  <div className="text-4xl lg:text-6xl mb-2 lg:mb-4">
+                <div className="bg-white rounded-2xl p-3 md:p-4 lg:p-8 shadow-2xl transform group-hover:scale-105 transition-all duration-300 border-4 border-orange-400 center-game-card">
+                  <div className="text-2xl md:text-4xl lg:text-6xl mb-1 md:mb-2 lg:mb-4">
                     {G.discardPile?.length > 0 && G.discardPile[G.discardPile.length - 1]?.emoji ?
                       G.discardPile[G.discardPile.length - 1].emoji : '🗂️'}
                   </div>
-                  <div className="text-gray-800 font-black text-base lg:text-xl">DISCARD</div>
-                  <div className="text-orange-600 font-bold text-sm lg:text-lg">{G.discardPile?.length || 0} CARDS</div>
+                  <div className="text-gray-800 font-black text-sm md:text-base lg:text-xl">DISCARD</div>
+                  <div className="text-orange-600 font-bold text-xs md:text-sm lg:text-lg">{G.discardPile?.length || 0} CARDS</div>
                   {G.discardPile?.length > 0 && (
                     <div className="text-gray-600 text-xs lg:text-sm mt-1 font-bold mobile-compact-text">
                       {G.discardPile[G.discardPile.length - 1]?.name}
@@ -278,7 +278,7 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
         </div>
 
         {/* Right Side - Player Hand */}
-        <div className="w-96 sidebar-right bg-black/10 backdrop-blur-sm border-l-4 border-yellow-400/50 flex flex-col">
+        <div className="w-48 md:w-64 lg:w-96 sidebar-right bg-black/10 backdrop-blur-sm border-l-4 border-yellow-400/50 flex flex-col">
           <PlayerHand
             player={humanPlayer}
             isActive={isActive}
