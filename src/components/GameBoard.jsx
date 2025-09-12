@@ -1,6 +1,7 @@
 import PlayerHand from './PlayerHand';
 import SeeTheFutureModal from './SeeTheFutureModal';
 import GameOverModal from './GameOverModal';
+import AttackNotification from './AttackNotification';
 
 // Import global variable setter from game file
 import { setGlobalSelectedFavorCard } from '../game/index';
@@ -61,6 +62,10 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
     console.log('Card stored in global variable, waitingForFavor will pick it up');
   };
 
+  // Check if there's an attack notification for the human player
+  const shouldShowAttackNotification = G.attackNotification &&
+    G.attackNotification.targetPlayer === parseInt(playerID);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-800 to-blue-900 p-4">
       <div className="max-w-6xl mx-auto">
@@ -70,6 +75,13 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
           winnerName={ctx.gameover?.winnerName}
           reason={ctx.gameover?.reason}
           onNewGame={() => window.location.reload()}
+        />
+
+        <AttackNotification
+          isVisible={shouldShowAttackNotification}
+          attackerName={G.attackNotification?.attackerName}
+          remainingTurns={G.attackNotification?.remainingTurns}
+          onDismiss={() => moves.dismissAttackNotification()}
         />
 
         {G.seeTheFutureCards && G.seeTheFuturePlayer === playerID && (

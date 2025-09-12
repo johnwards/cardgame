@@ -40,7 +40,8 @@ const ExplodingKittensGame = {
       favorTarget: null,
       waitingForFavor: null,
       seeTheFutureCards: null,
-      seeTheFuturePlayer: null
+      seeTheFuturePlayer: null,
+      attackNotification: null // { attackerName, targetPlayer, timestamp }
     };
 
     console.log('Phase C Setup complete:');
@@ -102,6 +103,18 @@ const ExplodingKittensGame = {
           }
           G.turnsRemaining[nextPlayer] = (G.turnsRemaining[nextPlayer] || 1) + 1;
           console.log('Next player', nextPlayer, 'now has', G.turnsRemaining[nextPlayer], 'turns');
+
+          // If a CPU attacked the human player (player 0), show notification
+          if (G.players[playerID]?.isCPU && nextPlayer === 0) {
+            console.log('CPU', playerID, 'attacked human player - setting notification');
+            G.attackNotification = {
+              attackerName: G.players[playerID].name,
+              targetPlayer: nextPlayer,
+              remainingTurns: G.turnsRemaining[nextPlayer],
+              timestamp: Date.now()
+            };
+          }
+
           events.endTurn();
           break;
         }
@@ -385,6 +398,17 @@ const ExplodingKittensGame = {
 
       console.log('See the Future dismissed');
       console.log('=== DISMISS SEE THE FUTURE COMPLETE ===');
+    },
+
+    dismissAttackNotification: ({ G, playerID }) => {
+      console.log('=== DISMISS ATTACK NOTIFICATION MOVE CALLED ===');
+      console.log('playerID:', playerID);
+
+      // Clear the attack notification
+      G.attackNotification = null;
+
+      console.log('Attack notification dismissed');
+      console.log('=== DISMISS ATTACK NOTIFICATION COMPLETE ===');
     },
 
     waitingForFavor: ({ G, playerID }) => {

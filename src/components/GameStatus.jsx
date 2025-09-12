@@ -1,29 +1,25 @@
 /**
  * GameStatus Component - Turn indicators and status messages
  * 
- * Implements Task 3.3: Game Area and Status Display Components
- * - Current player indicator with clear visual highlighting
- * - Game status messages for turns, eliminations, and special states
- * - Turn progression and game flow information
- * - Uses Tailwind CSS for consistent styling and clear visual hierarchy
  */
 
-const GameStatus = ({ 
-  currentPlayer, 
-  players, 
-  playerID, 
-  isActive, 
-  turn, 
-  lastAction, 
+const GameStatus = ({
+  currentPlayer,
+  players,
+  playerID,
+  isActive,
+  turn,
+  lastAction,
   hasPendingExplodingKitten = false,
-  gamePhase = 'playing'
+  gamePhase = 'playing',
+  turnsRemaining = {}
 }) => {
   // Get current player info
   const currentPlayerInfo = players[currentPlayer];
-  
+
   // Determine if it's the human player's turn
   const isHumanTurn = currentPlayer === playerID;
-  
+
   // Get alive players count
   const alivePlayers = Object.values(players).filter(p => !p.isEliminated);
   const eliminatedPlayers = Object.values(players).filter(p => p.isEliminated);
@@ -37,15 +33,26 @@ const GameStatus = ({
         icon: "💥"
       };
     }
-    
+
+    // Check if human player has multiple turns due to attack
+    const humanTurnsRemaining = turnsRemaining[playerID] || 1;
+    const hasMultipleTurns = humanTurnsRemaining > 1;
+
     if (isHumanTurn && isActive) {
+      if (hasMultipleTurns) {
+        return {
+          message: `Your turn! You have ${humanTurnsRemaining} turns left (thanks to that attack!)`,
+          type: "attacked",
+          icon: "⚔️"
+        };
+      }
       return {
         message: "Your turn! Play cards or draw to end your turn.",
         type: "active",
         icon: "⚡"
       };
     }
-    
+
     if (isHumanTurn && !isActive) {
       return {
         message: "Waiting for your input...",
@@ -53,7 +60,7 @@ const GameStatus = ({
         icon: "⏳"
       };
     }
-    
+
     if (currentPlayerInfo?.isCPU) {
       return {
         message: `${currentPlayerInfo.name} is thinking...`,
@@ -61,7 +68,7 @@ const GameStatus = ({
         icon: "🤖"
       };
     }
-    
+
     return {
       message: `Waiting for ${currentPlayerInfo?.name || 'player'}...`,
       type: "neutral",
@@ -76,6 +83,8 @@ const GameStatus = ({
     switch (type) {
       case 'active':
         return 'bg-green-500 text-white border-green-400 shadow-lg shadow-green-500/30';
+      case 'attacked':
+        return 'bg-orange-500 text-white border-orange-400 shadow-lg shadow-orange-500/30 animate-pulse';
       case 'danger':
         return 'bg-red-500 text-white border-red-400 shadow-lg shadow-red-500/30 animate-pulse';
       case 'waiting':
@@ -154,8 +163,8 @@ const GameStatus = ({
                 ${player.id === currentPlayer
                   ? 'bg-yellow-500/20 border-yellow-500/50 text-yellow-200'
                   : player.isEliminated
-                  ? 'bg-red-500/10 border-red-500/30 text-red-300 opacity-60'
-                  : 'bg-white/10 border-white/20'
+                    ? 'bg-red-500/10 border-red-500/30 text-red-300 opacity-60'
+                    : 'bg-white/10 border-white/20'
                 }
               `}
             >
