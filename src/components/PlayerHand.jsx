@@ -201,7 +201,7 @@ const PlayerHand = ({
   }
 
   return (
-    <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 text-white">
+    <div className="h-full flex flex-col bg-transparent">
       {showTargetSelection && (
         <PlayerTargetSelection
           players={players}
@@ -223,196 +223,191 @@ const PlayerHand = ({
         />
       )}
 
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold">Your Hand</h2>
-        <div className="text-right">
-          <div className="text-lg font-semibold">{player.hand?.length || 0} cards</div>
-          {player.isEliminated && (
-            <div className="text-red-400 text-sm font-bold">💀 Eliminated</div>
-          )}
+      {/* Player Header */}
+      <div className="bg-white/20 backdrop-blur-md text-white p-4 border-b border-white/20">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-black text-white drop-shadow-lg">YOUR HAND</h2>
+          <div className="text-right">
+            <div className="text-lg font-bold text-white drop-shadow-lg">{player.hand?.length || 0} CARDS</div>
+            {player.isEliminated && (
+              <div className="text-red-400 text-sm font-bold">💀 ELIMINATED</div>
+            )}
+          </div>
         </div>
       </div>
 
-      <div className="mb-4 text-xs bg-black/20 p-2 rounded">
-        <div>Current Player: {isCurrentPlayer ? 'YES' : 'NO'}</div>
-        <div>Active: {isActive ? 'YES' : 'NO'}</div>
-        <div>Can Draw: {canDrawCard ? 'YES' : 'NO'}</div>
-        <div>Can Play Cards: {canPlayCards ? 'YES' : 'NO'}</div>
-        <div>Deck Count: {deckCount}</div>
-        <div>Available Moves: {Object.keys(moves || {}).join(', ')}</div>
-      </div>
+      {/* Turn Status & Draw Button */}
+      <div className="bg-white/10 backdrop-blur-sm p-4 border-b border-white/20">
+        <div className="flex flex-col gap-3">
 
-      <div className="mb-6">
-        <div className="flex flex-wrap gap-3 justify-center">
+          {/* Turn Indicator */}
+          <div className={`
+            text-center py-2 px-4 rounded-full font-bold text-sm border backdrop-blur-sm
+            ${isCurrentPlayer && isActive
+              ? 'bg-green-500/80 text-white border-green-400 animate-gentle-pulse'
+              : 'bg-gray-600/80 text-gray-200 border-gray-500'
+            }
+          `}>
+            {isCurrentPlayer && isActive ? (
+              <>⚡ YOUR TURN!</>
+            ) : isCurrentPlayer ? (
+              <>⏳ WAITING...</>
+            ) : (
+              <>👥 OTHER'S TURN</>
+            )}
+          </div>
+
+          {/* Draw Button */}
           <button
             onClick={handleDrawCard}
             disabled={!drawEnabled}
             className={`
-              px-6 py-3 rounded-lg font-bold text-lg transition-all duration-200 transform
+              w-full py-4 rounded-xl font-black text-lg transition-all duration-200 transform border backdrop-blur-sm
               ${drawEnabled
-                ? 'bg-blue-600 hover:bg-blue-700 hover:scale-105 shadow-lg text-white cursor-pointer'
-                : 'bg-gray-500 text-gray-300 cursor-not-allowed opacity-50'
+                ? 'bg-blue-600/90 hover:bg-blue-700/90 text-white border-blue-400 hover:scale-105 shadow-lg cursor-pointer'
+                : 'bg-gray-600/60 text-gray-300 border-gray-500 cursor-not-allowed opacity-50'
               }
             `}
           >
-            🎴 Draw Card
+            🎴 DRAW CARD
             {deckCount > 0 && (
-              <span className="ml-2 text-sm opacity-80">({deckCount} left)</span>
+              <div className="text-sm opacity-80">({deckCount} left)</div>
             )}
           </button>
-
-          <div className={`
-            px-4 py-3 rounded-lg font-semibold text-sm flex items-center
-            ${isCurrentPlayer && isActive
-              ? 'bg-green-500/20 text-green-300 border border-green-500/50'
-              : 'bg-gray-500/20 text-gray-400 border border-gray-500/50'
-            }
-          `}>
-            {isCurrentPlayer && isActive ? (
-              <>
-                <span className="animate-pulse mr-2">⚡</span>
-                Your Turn!
-              </>
-            ) : isCurrentPlayer ? (
-              <>
-                <span className="mr-2">⏳</span>
-                Waiting...
-              </>
-            ) : (
-              <>
-                <span className="mr-2">👥</span>
-                Other's Turn
-              </>
-            )}
-          </div>
         </div>
-      </div>
+      </div>      {/* Cards Section */}
+      <div className="flex-1 p-4 overflow-y-auto">
+        {player.hand && player.hand.length > 0 ? (
+          <>
+            {/* Special Instructions */}
+            {needsToGiveFavorCard && (
+              <div className="bg-purple-600/80 rounded-lg p-3 mb-4 text-center text-white animate-pulse">
+                <div className="font-bold text-sm">🤝 GIVE A CARD</div>
+                <div className="text-xs">Click any card to give to {gameState.players?.[gameState.pendingFavor]?.name}</div>
+              </div>
+            )}
 
-      {player.hand && player.hand.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-          {player.hand.map((card, index) => {
-            let canPlayThisCard, cardAction, cardBgStyle;
+            {/* Cards Grid */}
+            <div className="grid grid-cols-2 gap-3">
+              {player.hand.map((card, index) => {
+                let canPlayThisCard, cardAction, cardBgStyle;
 
-            const catPairs = findCatPairs();
-            const hasPair = card.type === 'cat' && catPairs.some(pair => pair.catName === card.name);
+                const catPairs = findCatPairs();
+                const hasPair = card.type === 'cat' && catPairs.some(pair => pair.catName === card.name);
 
-            if (needsToGiveFavorCard) {
-              canPlayThisCard = true;
-              cardAction = 'Click to give this card';
-              cardBgStyle = 'cursor-pointer hover:shadow-xl hover:scale-105 hover:bg-purple-50 hover:-translate-y-1 border-2 border-purple-300';
-            } else {
-              canPlayThisCard = cardsPlayable && (
-                card.type === 'skip' ||
-                card.type === 'shuffle' ||
-                card.type === 'attack' ||
-                card.type === 'favor' ||
-                card.type === 'see_future' ||
-                card.type === 'cat'
-              );
+                if (needsToGiveFavorCard) {
+                  canPlayThisCard = true;
+                  cardAction = 'Give card';
+                  cardBgStyle = 'cursor-pointer hover:shadow-xl hover:scale-105 hover:bg-purple-50 hover:-translate-y-1 border-2 border-purple-400';
+                } else {
+                  canPlayThisCard = cardsPlayable && (
+                    card.type === 'skip' ||
+                    card.type === 'shuffle' ||
+                    card.type === 'attack' ||
+                    card.type === 'favor' ||
+                    card.type === 'see_future' ||
+                    card.type === 'cat'
+                  );
 
-              if (card.type === 'favor') {
-                cardAction = 'Click to choose target';
-              } else if (card.type === 'see_future') {
-                cardAction = 'Click to see future';
-              } else if (card.type === 'cat' && hasPair) {
-                cardAction = 'Click to play pair';
-              } else if (card.type === 'cat') {
-                cardAction = 'Need pair to play';
-                canPlayThisCard = false;
-              } else {
-                cardAction = 'Click to play';
-              }
-
-              cardBgStyle = canPlayThisCard
-                ? 'cursor-pointer hover:shadow-xl hover:scale-105 hover:bg-yellow-50 hover:-translate-y-1'
-                : 'cursor-not-allowed opacity-75';
-            }
-
-            return (
-              <div
-                key={card.id}
-                className={`
-                  bg-white text-gray-800 rounded-lg p-3 text-center transition-all duration-200 transform
-                  ${cardBgStyle}
-                  ${card.type === 'exploding'
-                    ? 'border-2 border-red-500 bg-red-50'
-                    : card.type === 'defuse'
-                      ? 'border-2 border-green-500 bg-green-50'
-                      : card.type === 'cat' && hasPair
-                        ? 'border-2 border-orange-400 bg-orange-50'
-                        : needsToGiveFavorCard
-                          ? '' // border already set above
-                          : 'border border-gray-200'
+                  if (card.type === 'favor') {
+                    cardAction = 'Choose target';
+                  } else if (card.type === 'see_future') {
+                    cardAction = 'See future';
+                  } else if (card.type === 'cat' && hasPair) {
+                    cardAction = 'Play pair';
+                  } else if (card.type === 'cat') {
+                    cardAction = 'Need pair';
+                    canPlayThisCard = false;
+                  } else {
+                    cardAction = 'Play';
                   }
-                `}
-                onClick={() => canPlayThisCard && handleCardPlay(index)}
-              >
-                <div className="text-2xl mb-1">{card.emoji}</div>
 
-                <div className="font-bold text-xs mb-1 leading-tight">
-                  {card.name}
-                </div>
+                  cardBgStyle = canPlayThisCard
+                    ? 'cursor-pointer hover:shadow-xl hover:scale-105 hover:bg-yellow-50 hover:-translate-y-1 border-2 border-green-400'
+                    : 'cursor-not-allowed opacity-75 border border-gray-300';
+                }
 
-                <div className="text-xs opacity-70 leading-tight">
-                  {card.type}
-                </div>
+                return (
+                  <div
+                    key={card.id}
+                    className={`
+                      bg-white text-gray-800 rounded-lg p-3 text-center transition-all duration-200 transform hover:scale-105 hover:shadow-lg
+                      ${cardBgStyle}
+                      ${card.type === 'exploding'
+                        ? 'border-2 border-red-500 bg-red-50'
+                        : card.type === 'defuse'
+                          ? 'border-2 border-green-500 bg-green-50'
+                          : card.type === 'cat' && hasPair
+                            ? 'border-2 border-orange-400 bg-orange-50'
+                            : needsToGiveFavorCard
+                              ? '' // border already set above
+                              : ''
+                      }
+                    `}
+                    onClick={() => canPlayThisCard && handleCardPlay(index)}
+                  >
+                    <div className="text-2xl mb-1">{card.emoji}</div>
 
-                {card.type === 'cat' && hasPair && (
-                  <div className="mt-1 text-xs font-bold text-orange-600">
-                    PAIR!
-                  </div>
-                )}
+                    <div className="font-bold text-xs mb-1 leading-tight">
+                      {card.name}
+                    </div>
 
-                {card.type === 'exploding' && (
-                  <div className="mt-1 text-xs font-bold text-red-600">
-                    DANGER!
-                  </div>
-                )}
-                {card.type === 'defuse' && (
-                  <div className="mt-1 text-xs font-bold text-green-600">
-                    SAFETY
-                  </div>
-                )}
+                    <div className="text-xs opacity-70 leading-tight">
+                      {card.type}
+                    </div>
 
-                {canPlayThisCard && (
-                  <div className={`mt-1 text-xs opacity-50 ${needsToGiveFavorCard ? 'text-purple-600' : 'text-blue-600'}`}>
-                    {cardAction}
+                    {card.type === 'cat' && hasPair && (
+                      <div className="mt-1 text-xs font-bold text-orange-600">
+                        PAIR!
+                      </div>
+                    )}
+
+                    {card.type === 'exploding' && (
+                      <div className="mt-1 text-xs font-bold text-red-600">
+                        DANGER!
+                      </div>
+                    )}
+                    {card.type === 'defuse' && (
+                      <div className="mt-1 text-xs font-bold text-green-600">
+                        SAFETY
+                      </div>
+                    )}
+
+                    {canPlayThisCard && (
+                      <div className={`mt-1 text-xs opacity-60 font-bold ${needsToGiveFavorCard ? 'text-purple-600' : 'text-blue-600'}`}>
+                        {cardAction}
+                      </div>
+                    )}
                   </div>
-                )}
-                {!needsToGiveFavorCard && cardsPlayable && !canPlayThisCard && card.type !== 'exploding' && card.type !== 'defuse' && (
-                  <div className="mt-1 text-xs text-gray-500 opacity-50">
-                    Cannot play
-                  </div>
+                );
+              })}
+            </div>
+
+            {/* Help Text */}
+            <div className="mt-4 text-center">
+              <div className="text-xs opacity-70 text-white bg-black/20 rounded-lg p-2">
+                {needsToGiveFavorCard ? (
+                  <>🤝 Click any card to complete the favor</>
+                ) : cardsPlayable ? (
+                  <>Click cards to play them • Draw to end turn</>
+                ) : (
+                  <>Wait for your turn to play cards</>
                 )}
               </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="text-center py-8 opacity-60">
-          <div className="text-4xl mb-2">🃏</div>
-          <p className="text-lg">No cards in hand</p>
-          {player.isEliminated ? (
-            <p className="text-sm mt-2 text-red-400">You were eliminated from the game</p>
-          ) : (
-            <p className="text-sm mt-2">Draw cards to build your hand</p>
-          )}
-        </div>
-      )}
-
-      {player.hand && player.hand.length > 0 && (
-        <div className="mt-4 text-center">
-          <div className="text-xs opacity-60">
-            {needsToGiveFavorCard ? (
-              <>🤝 Choose a card to give away! • Click any card to complete the favor for {gameState.players?.[gameState.pendingFavor]?.name || 'the requesting player'}</>
-            ) : cardsPlayable ? (
-              <>Click cards to play them • Favor cards will ask you to choose a target • Draw a card to end your turn</>
+            </div>
+          </>
+        ) : (
+          <div className="text-center py-8 text-white/60">
+            <div className="text-4xl mb-3">🃏</div>
+            <p className="text-lg font-bold">No Cards</p>
+            {player.isEliminated ? (
+              <p className="text-sm mt-2 text-red-400">You were eliminated!</p>
             ) : (
-              <>Wait for your turn to play cards</>
+              <p className="text-sm mt-2">Draw cards to build your hand</p>
             )}
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
