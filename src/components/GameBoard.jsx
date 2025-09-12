@@ -53,8 +53,6 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
     return <div className="p-8 text-red-600">Error: humanPlayer is null or undefined</div>;
   }
 
-  // No need for enhanced moves since completeFavor is now a proper game move
-
   // Handler for when human selects a card for favor (store in global variable)
   const handleGiveFavorCard = (cardIndex) => {
     console.log('=== STORING SELECTED FAVOR CARD ===');
@@ -66,7 +64,6 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-800 to-blue-900 p-4">
       <div className="max-w-6xl mx-auto">
-        {/* Game Over Modal */}
         <GameOverModal
           isVisible={!!ctx.gameover}
           winner={ctx.gameover?.winner}
@@ -75,7 +72,6 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
           onNewGame={() => window.location.reload()}
         />
 
-        {/* See the Future Modal */}
         {G.seeTheFutureCards && G.seeTheFuturePlayer === playerID && (
           <SeeTheFutureModal
             futureCards={G.seeTheFutureCards}
@@ -83,7 +79,6 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
           />
         )}
 
-        {/* Game Header */}
         <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 mb-6 text-white">
           <h1 className="text-4xl font-bold text-center mb-2">💥 Exploding Kittens 💥</h1>
           <div className="text-center">
@@ -96,7 +91,6 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Other Players Panel */}
           <div className="lg:col-span-1">
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 text-white">
               <h2 className="text-2xl font-bold mb-4">Other Players</h2>
@@ -131,13 +125,10 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
             </div>
           </div>
 
-          {/* Game Area and Status */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Game Status Messages */}
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 text-white text-center">
               <h2 className="text-2xl font-bold mb-4">Game Area</h2>
 
-              {/* Current turn indicator */}
               <div className="mb-4 p-3 bg-blue-600/50 rounded-lg">
                 <div className="font-bold">Current Turn: {currentPlayer.name}</div>
                 {currentPlayer.isCPU && (
@@ -148,7 +139,6 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
                 )}
               </div>
 
-              {/* Special status messages */}
               {G.pendingExplodingKitten && G.pendingPlayer === playerID && (
                 <div className="mb-4 p-3 bg-orange-600 rounded-lg">
                   <div className="font-bold">🛡️ DEFUSE USED!</div>
@@ -164,7 +154,6 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
                 </div>
               )}
 
-              {/* Pending Favor - Human player needs to give a card */}
               {G.pendingFavor && G.favorTarget === playerID && (
                 <div className="mb-4 p-3 bg-purple-600 rounded-lg">
                   <div className="font-bold">🤝 FAVOR REQUEST!</div>
@@ -173,7 +162,6 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
                 </div>
               )}
 
-              {/* Pending Favor - Someone else needs to give a card */}
               {G.pendingFavor && G.favorTarget !== playerID && (
                 <div className="mb-4 p-3 bg-purple-600/70 rounded-lg">
                   <div className="font-bold">🤝 FAVOR IN PROGRESS</div>
@@ -181,7 +169,6 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
                 </div>
               )}
 
-              {/* Check if human player was recently eliminated */}
               {humanPlayer.isEliminated && (
                 <div className="mb-4 p-3 bg-red-600 rounded-lg">
                   <div className="font-bold">💀 YOU WERE ELIMINATED!</div>
@@ -207,7 +194,6 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
               </div>
             </div>
 
-            {/* Enhanced Player Hand Component */}
             <PlayerHand
               player={humanPlayer}
               isActive={isActive}
@@ -217,12 +203,11 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
               moves={moves}
               deckCount={G.deck?.length || 0}
               hasPendingExplodingKitten={G.pendingExplodingKitten && G.pendingPlayer === playerID}
-              players={G.players} // Pass all players for target selection
-              gameState={G} // Pass game state for favor handling
-              onGiveFavorCard={handleGiveFavorCard} // Pass handler for direct favor completion
+              players={G.players}
+              gameState={G}
+              onGiveFavorCard={handleGiveFavorCard}
             />
 
-            {/* Exploding Kitten Placement Interface */}
             {G.pendingExplodingKitten && G.pendingPlayer === playerID && (
               <div className="bg-red-600/90 backdrop-blur-sm rounded-lg p-6 text-white">
                 <h3 className="text-xl font-bold mb-4 text-center">💥 Place Exploding Kitten 💥</h3>
@@ -252,7 +237,6 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
           </div>
         </div>
 
-        {/* Debug Panel (Development Mode) */}
         <details className="mt-6 bg-black/20 backdrop-blur-sm rounded-lg p-4 text-white">
           <summary className="cursor-pointer text-yellow-300 font-bold">
             🛠️ Debug Information (Click to expand)

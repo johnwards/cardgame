@@ -1,8 +1,5 @@
 /**
- * PlayerTargetSelection Component
- * 
- * Shows a modal-style interface for selecting which player to target
- * with Favor cards or other targeted actions.
+ * Modal for selecting target players for card actions
  */
 
 const PlayerTargetSelection = ({
@@ -50,13 +47,11 @@ const PlayerTargetSelection = ({
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 max-w-lg mx-4">
-        {/* Header */}
         <div className="text-center mb-6">
           <h3 className="text-2xl font-bold text-gray-800 mb-2">{title}</h3>
           <p className="text-gray-600">{description}</p>
         </div>
 
-        {/* Player Selection Grid */}
         <div className="grid gap-3 mb-6">
           {validTargets.map(player => (
             <button
@@ -69,12 +64,10 @@ const PlayerTargetSelection = ({
               "
             >
               <div className="flex items-center gap-3">
-                {/* Player Icon */}
                 <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
                   {player.isCPU ? '🤖' : '👤'}
                 </div>
 
-                {/* Player Info */}
                 <div className="text-left">
                   <div className="font-bold text-gray-800">{player.name}</div>
                   <div className="text-sm text-gray-600">
@@ -84,7 +77,6 @@ const PlayerTargetSelection = ({
                 </div>
               </div>
 
-              {/* Selection Arrow */}
               <div className="text-blue-500 text-xl">
                 👉
               </div>
@@ -92,7 +84,6 @@ const PlayerTargetSelection = ({
           ))}
         </div>
 
-        {/* Cancel Button */}
         <div className="text-center">
           <button
             onClick={onCancel}

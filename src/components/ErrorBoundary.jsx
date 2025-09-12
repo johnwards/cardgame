@@ -1,6 +1,5 @@
 /**
- * Error Boundary Component for debugging React errors
- * This will help us see what's causing the white screen
+ * Error boundary for graceful error handling
  */
 
 import { Component } from 'react';

@@ -1,8 +1,5 @@
 /**
- * CatPairSelection Component
- * 
- * Shows a modal-style interface for selecting which player to target
- * with cat pair attacks and then selecting a card from their hand.
+ * Modal for playing cat card pairs against other players
  */
 
 import { useState } from 'react';

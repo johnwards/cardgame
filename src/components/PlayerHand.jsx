@@ -1,7 +1,5 @@
 /**
- * SIMPLIFIED PlayerHand Component for debugging
- * 
- * Minimal version to test basic functionality
+ * Player hand component with card interaction and favor handling
  */
 
 import { useState } from 'react';
@@ -222,7 +220,6 @@ const PlayerHand = ({
 
   return (
     <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 text-white">
-      {/* Target Selection Modal */}
       {showTargetSelection && (
         <PlayerTargetSelection
           players={players}
@@ -234,7 +231,6 @@ const PlayerHand = ({
         />
       )}
 
-      {/* Cat Pair Selection Modal */}
       {showCatPairSelection && availableCatPairs.length > 0 && (
         <CatPairSelection
           catPair={availableCatPairs[0]}
@@ -245,7 +241,6 @@ const PlayerHand = ({
         />
       )}
 
-      {/* Hand Header */}
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">Your Hand</h2>
         <div className="text-right">
@@ -256,7 +251,6 @@ const PlayerHand = ({
         </div>
       </div>
 
-      {/* Debug Info */}
       <div className="mb-4 text-xs bg-black/20 p-2 rounded">
         <div>Current Player: {isCurrentPlayer ? 'YES' : 'NO'}</div>
         <div>Active: {isActive ? 'YES' : 'NO'}</div>
@@ -266,10 +260,8 @@ const PlayerHand = ({
         <div>Available Moves: {Object.keys(moves || {}).join(', ')}</div>
       </div>
 
-      {/* Action Buttons */}
       <div className="mb-6">
         <div className="flex flex-wrap gap-3 justify-center">
-          {/* Draw Card Button */}
           <button
             onClick={handleDrawCard}
             disabled={!drawEnabled}
@@ -287,7 +279,6 @@ const PlayerHand = ({
             )}
           </button>
 
-          {/* Turn Status Indicator */}
           <div className={`
             px-4 py-3 rounded-lg font-semibold text-sm flex items-center
             ${isCurrentPlayer && isActive
@@ -315,7 +306,6 @@ const PlayerHand = ({
         </div>
       </div>
 
-      {/* Player Hand Cards */}
       {player.hand && player.hand.length > 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
           {player.hand.map((card, index) => {
@@ -379,27 +369,22 @@ const PlayerHand = ({
                 `}
                 onClick={() => canPlayThisCard && handleCardPlay(index)}
               >
-                {/* Card Emoji */}
                 <div className="text-2xl mb-1">{card.emoji}</div>
 
-                {/* Card Name */}
                 <div className="font-bold text-xs mb-1 leading-tight">
                   {card.name}
                 </div>
 
-                {/* Card Type */}
                 <div className="text-xs opacity-70 leading-tight">
                   {card.type}
                 </div>
 
-                {/* Cat Pair Indicator */}
                 {card.type === 'cat' && hasPair && (
                   <div className="mt-1 text-xs font-bold text-orange-600">
                     PAIR!
                   </div>
                 )}
 
-                {/* Card Type Indicator */}
                 {card.type === 'exploding' && (
                   <div className="mt-1 text-xs font-bold text-red-600">
                     DANGER!
@@ -411,7 +396,6 @@ const PlayerHand = ({
                   </div>
                 )}
 
-                {/* Interactive State Indicator */}
                 {canPlayThisCard && (
                   <div className={`mt-1 text-xs opacity-50 ${needsToGiveFavorCard ? 'text-purple-600' : 'text-blue-600'}`}>
                     {cardAction}
@@ -438,7 +422,6 @@ const PlayerHand = ({
         </div>
       )}
 
-      {/* Hand Management Tips */}
       {player.hand && player.hand.length > 0 && (
         <div className="mt-4 text-center">
           <div className="text-xs opacity-60">

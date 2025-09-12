@@ -1,9 +1,6 @@
 /**
- * Phase 1: Core Game Foundation - Card System Implementation
- * 
- * This module implements the basic card system for Exploding Kittens Phase 1.
- * Phase 1 includes only the essential cards: Regular cards, Exploding Kittens, and Defuse cards.
- * Advanced action cards will be added in later phases.
+ * Card system implementation for Exploding Kittens
+ * Defines card types, creation functions, and deck setup
  */
 
 // Card type constants for Phase 1
@@ -18,22 +15,16 @@ export const CARD_TYPES = {
   CAT: 'cat'
 };
 
-// Phase 1 deck composition for 4 players
 export const PHASE1_DECK_CONFIG = {
   [CARD_TYPES.EXPLODING]: 3,
   [CARD_TYPES.DEFUSE]: 6,
-  // Action cards
   [CARD_TYPES.SKIP]: 4,
   [CARD_TYPES.FAVOR]: 4,
   [CARD_TYPES.SHUFFLE]: 4,
   [CARD_TYPES.ATTACK]: 4,
   [CARD_TYPES.SEE_FUTURE]: 5,
-  [CARD_TYPES.CAT]: 20       // 5 different types, 4 of each
+  [CARD_TYPES.CAT]: 20
 };
-
-// Total cards calculation: 3 + 6 + 47 = 56 cards
-// Initial deal: 4 players × 8 cards = 32 cards
-// Remaining deck: 56 - 32 = 24 cards (includes 2 defuse + 3 exploding + 19 regular)
 
 /**
  * Creates a card object with the specified properties
@@ -54,8 +45,7 @@ export function createCard(type, name, emoji, description = '') {
 }
 
 /**
- * Creates all Exploding Kitten cards for the game
- * @returns {Array} Array of Exploding Kitten card objects
+ * Creates all Exploding Kitten cards
  */
 export function createExplodingKittens() {
   const cards = [];
@@ -71,8 +61,7 @@ export function createExplodingKittens() {
 }
 
 /**
- * Creates all Defuse cards for the game
- * @returns {Array} Array of Defuse card objects
+ * Creates all Defuse cards
  */
 export function createDefuseCards() {
   const cards = [];
@@ -89,10 +78,6 @@ export function createDefuseCards() {
 
 
 
-/**
- * Creates all Skip cards for the game
- * @returns {Array} Array of Skip card objects
- */
 export function createSkipCards() {
   const cards = [];
   for (let i = 0; i < PHASE1_DECK_CONFIG[CARD_TYPES.SKIP]; i++) {
@@ -106,10 +91,6 @@ export function createSkipCards() {
   return cards;
 }
 
-/**
- * Creates all Favor cards for the game
- * @returns {Array} Array of Favor card objects
- */
 export function createFavorCards() {
   const cards = [];
   for (let i = 0; i < PHASE1_DECK_CONFIG[CARD_TYPES.FAVOR]; i++) {
@@ -123,10 +104,6 @@ export function createFavorCards() {
   return cards;
 }
 
-/**
- * Creates all Shuffle cards for the game
- * @returns {Array} Array of Shuffle card objects
- */
 export function createShuffleCards() {
   const cards = [];
   for (let i = 0; i < PHASE1_DECK_CONFIG[CARD_TYPES.SHUFFLE]; i++) {
@@ -140,10 +117,6 @@ export function createShuffleCards() {
   return cards;
 }
 
-/**
- * Creates all Attack cards for the game
- * @returns {Array} Array of Attack card objects
- */
 export function createAttackCards() {
   const cards = [];
   for (let i = 0; i < PHASE1_DECK_CONFIG[CARD_TYPES.ATTACK]; i++) {
@@ -157,10 +130,6 @@ export function createAttackCards() {
   return cards;
 }
 
-/**
- * Creates all See the Future cards for the game
- * @returns {Array} Array of See the Future card objects
- */
 export function createSeeTheFutureCards() {
   const cards = [];
   for (let i = 0; i < PHASE1_DECK_CONFIG[CARD_TYPES.SEE_FUTURE]; i++) {
@@ -174,10 +143,6 @@ export function createSeeTheFutureCards() {
   return cards;
 }
 
-/**
- * Creates all Cat cards for the game
- * @returns {Array} Array of Cat card objects
- */
 export function createCatCards() {
   const cards = [];
   const catTypes = [
@@ -190,7 +155,7 @@ export function createCatCards() {
 
   for (let typeIndex = 0; typeIndex < catTypes.length; typeIndex++) {
     const catType = catTypes[typeIndex];
-    for (let i = 0; i < 4; i++) { // 4 of each cat type
+    for (let i = 0; i < 4; i++) {
       cards.push(createCard(
         CARD_TYPES.CAT,
         catType.name,
@@ -203,9 +168,7 @@ export function createCatCards() {
 }
 
 /**
- * Creates the complete initial deck for Phase 1
- * This includes all cards before dealing to players
- * @returns {Array} Array of all card objects for the game
+ * Creates the complete initial deck
  */
 export function createInitialDeck() {
   const deck = [
@@ -231,11 +194,7 @@ export function createInitialDeck() {
 }
 
 /**
- * Shuffles a deck of cards using Fisher-Yates algorithm
- * This is a pure function - does not mutate the original array
- * @param {Array} deck - Array of card objects to shuffle
- * @param {Object} random - boardgame.io random object for deterministic shuffling
- * @returns {Array} New shuffled array of cards
+ * Shuffles a deck using boardgame.io's deterministic shuffle
  */
 export function shuffleDeck(deck, random) {
   const shuffled = [...deck]; // Create a copy
@@ -320,51 +279,24 @@ export function setupGameDeck(numPlayers = 4, random) {
  * Helper functions for card type checking
  */
 
-/**
- * Checks if a card is an Exploding Kitten
- * @param {Object} card - Card object to check
- * @returns {boolean} True if card is an Exploding Kitten
- */
 export function isExplodingKitten(card) {
   return card && card.type === CARD_TYPES.EXPLODING;
 }
 
-/**
- * Checks if a card is a Defuse card
- * @param {Object} card - Card object to check
- * @returns {boolean} True if card is a Defuse card
- */
 export function isDefuseCard(card) {
   return card && card.type === CARD_TYPES.DEFUSE;
 }
 
 
 
-/**
- * Counts cards of a specific type in a hand
- * @param {Array} hand - Array of card objects
- * @param {string} cardType - Type of card to count
- * @returns {number} Number of cards of the specified type
- */
 export function countCardType(hand, cardType) {
   return hand.filter(card => card.type === cardType).length;
 }
 
-/**
- * Finds the first card of a specific type in a hand
- * @param {Array} hand - Array of card objects
- * @param {string} cardType - Type of card to find
- * @returns {Object|null} First card of the specified type, or null if not found
- */
 export function findCardOfType(hand, cardType) {
   return hand.find(card => card.type === cardType) || null;
 }
 
-/**
- * Groups cat cards by name in a hand
- * @param {Array} hand - Array of card objects
- * @returns {Object} Object with cat names as keys and arrays of matching cards as values
- */
 export function groupCatCards(hand) {
   const catCards = hand.filter(card => card.type === CARD_TYPES.CAT);
   const groups = {};
@@ -379,29 +311,19 @@ export function groupCatCards(hand) {
   return groups;
 }
 
-/**
- * Finds matching cat card pairs in a hand
- * @param {Array} hand - Array of card objects
- * @returns {Array} Array of arrays, each containing matching cat cards
- */
 export function findCatPairs(hand) {
   const groups = groupCatCards(hand);
   const pairs = [];
 
   Object.values(groups).forEach(group => {
     if (group.length >= 2) {
-      pairs.push(group.slice(0, 2)); // Take first 2 cards of this type
+      pairs.push(group.slice(0, 2));
     }
   });
 
   return pairs;
 }
 
-/**
- * Validates that a deck has the correct Phase 1 composition
- * @param {Array} deck - Array of card objects to validate
- * @returns {boolean} True if deck composition is correct
- */
 export function validateDeckComposition(deck) {
   const expectedSize = Object.values(PHASE1_DECK_CONFIG).reduce((sum, count) => sum + count, 0);
 

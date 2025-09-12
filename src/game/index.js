@@ -1,19 +1,11 @@
 /**
- * Exploding Kittens Game - Phase C Implementation
- * 
- * Following boardgame.io tutorial patterns exactly.
- * Phase A.1: Expanded to 4-player game structure (1 human + 3 CPU) ✅
- * Phase A.2: Implemented proper card system with correct deck composition ✅
- * Phase B.1: Added basic card playing move (playCard) ✅
- * Phase B.2: Implemented exploding kitten detection and defuse mechanics ✅
- * Phase C.1: Added win condition logic (endIf) ✅
- * Phase C.2: Implemented basic CPU AI logic (ai.enumerate) ✅
+ * Exploding Kittens Game Implementation
+ * 4-player game with AI opponents using boardgame.io
  */
 
 import { INVALID_MOVE } from 'boardgame.io/core';
-import { setupGameDeck, CARD_TYPES, findCatPairs } from '../constants/cards.js';
+import { setupGameDeck, CARD_TYPES } from '../constants/cards.js';
 
-// Global variable for favor card selection (simple solution)
 let globalSelectedFavorCard = null;
 
 console.log('Game file loading...');
@@ -24,19 +16,14 @@ const ExplodingKittensGame = {
   setup: ({ ctx, random }) => {
     console.log('Phase A Setup called with numPlayers:', ctx.numPlayers);
 
-    // Force 4 players for Phase A (1 human + 3 CPU)
     const numPlayers = 4;
-
-    // Use proper card system from constants
     const { dealtCards, finalDeck } = setupGameDeck(numPlayers, random);
-
-    // Create 4 players (Player 0 = human, Players 1-3 = CPU)
     const players = {};
     for (let i = 0; i < numPlayers; i++) {
       players[i] = {
         id: i,
         name: i === 0 ? 'You' : `CPU ${i}`,
-        hand: dealtCards[i], // Each player gets their dealt cards (1 defuse + 7 regular)
+        hand: dealtCards[i],
         isEliminated: false,
         isCPU: i !== 0
       };
@@ -44,16 +31,16 @@ const ExplodingKittensGame = {
 
     const gameState = {
       players,
-      deck: finalDeck, // Remaining deck with 4 defuse + 8 exploding + remaining action cards
+      deck: finalDeck,
       discardPile: [],
-      pendingExplodingKitten: null, // For defused exploding kittens awaiting placement
-      pendingPlayer: null, // Player who needs to place the exploding kitten
-      turnsRemaining: {}, // Track extra turns from Attack cards
-      pendingFavor: null, // Track pending favor requests
-      favorTarget: null,   // Target player for favor
-      waitingForFavor: null, // Player who is waiting for a favor to be completed
-      seeTheFutureCards: null, // Cards revealed by See the Future
-      seeTheFuturePlayer: null // Player who can see the future cards
+      pendingExplodingKitten: null,
+      pendingPlayer: null,
+      turnsRemaining: {},
+      pendingFavor: null,
+      favorTarget: null,
+      waitingForFavor: null,
+      seeTheFutureCards: null,
+      seeTheFuturePlayer: null
     };
 
     console.log('Phase C Setup complete:');
@@ -70,13 +57,11 @@ const ExplodingKittensGame = {
       console.log('=== PLAYCARD MOVE CALLED ===');
       console.log('playerID:', playerID, 'cardIndex:', cardIndex, 'targetPlayerID:', targetPlayerID);
 
-      // Block other card plays if there's a pending favor that needs to be resolved
       if (G.pendingFavor && G.favorTarget && G.favorTarget !== playerID) {
         console.log('Cannot play cards while favor is pending for another player');
         return INVALID_MOVE;
       }
 
-      // Validate card index
       if (cardIndex < 0 || cardIndex >= G.players[playerID].hand.length) {
         console.log('Invalid card index');
         return INVALID_MOVE;
@@ -85,15 +70,12 @@ const ExplodingKittensGame = {
       const card = G.players[playerID].hand[cardIndex];
       console.log('Attempting to play card:', card.name, 'type:', card.type);
 
-      // Remove card from hand and add to discard pile
       G.players[playerID].hand.splice(cardIndex, 1);
       G.discardPile.push(card);
 
-      // Handle card effects based on type
       switch (card.type) {
         case CARD_TYPES.SKIP:
           console.log('Skip card played - ending turn without drawing');
-          // Check if player has multiple turns from attack
           if (G.turnsRemaining[playerID] && G.turnsRemaining[playerID] > 1) {
             G.turnsRemaining[playerID]--;
             console.log('Player', playerID, 'skipped one turn, has', G.turnsRemaining[playerID], 'turns remaining');
@@ -187,7 +169,6 @@ const ExplodingKittensGame = {
       console.log('=== DRAWCARD MOVE CALLED ===');
       console.log('playerID:', playerID);
 
-      // Block drawing if there's a pending favor that needs to be resolved
       if (G.pendingFavor && G.favorTarget && G.favorTarget !== playerID) {
         console.log('Cannot draw cards while favor is pending for another player');
         return INVALID_MOVE;
@@ -268,14 +249,11 @@ const ExplodingKittensGame = {
         console.log('Regular card added to hand');
       }
 
-      // Check if player has multiple turns from attack
       if (G.turnsRemaining[playerID] && G.turnsRemaining[playerID] > 1) {
         G.turnsRemaining[playerID]--;
         console.log('Player', playerID, 'has', G.turnsRemaining[playerID], 'turns remaining, not ending turn');
-        // Don't end turn, player continues
         return;
       } else {
-        // Reset turns and end turn normally
         G.turnsRemaining[playerID] = 1;
         console.log('Drawing card ends turn - passing to next player');
         events.endTurn();
@@ -295,30 +273,23 @@ const ExplodingKittensGame = {
         return INVALID_MOVE;
       }
 
-      // Validate position (0 = top of deck, deck.length = bottom of deck)
       if (position < 0 || position > G.deck.length) {
         console.log('Invalid position:', position, 'deck length:', G.deck.length);
         return INVALID_MOVE;
       }
 
-      // Calculate actual array position
-      // Since deck.pop() takes from END of array, position 0 should be END of array
       let actualPosition;
       if (position === 0) {
-        // Top of deck = end of array (next card to be drawn)
-        actualPosition = G.deck.length;
+        actualPosition = G.deck.length; // Top = end of array (next to draw)
       } else if (position === G.deck.length) {
-        // Bottom of deck = beginning of array (last card to be drawn)
-        actualPosition = 0;
+        actualPosition = 0; // Bottom = beginning of array
       } else {
-        // Middle positions need to be flipped
         actualPosition = G.deck.length - position;
       }
 
       console.log('💣 Requested position:', position, '(0=top, ' + G.deck.length + '=bottom)');
       console.log('💣 Actual array position:', actualPosition);
 
-      // Insert at calculated position
       G.deck.splice(actualPosition, 0, G.pendingExplodingKitten);
 
       console.log('💣 EXPLODING KITTEN PLACED!');
@@ -327,7 +298,6 @@ const ExplodingKittensGame = {
       console.log('💣 Card placed:', G.pendingExplodingKitten.name);
       console.log('💣 Note: Position 0 = top of deck = next card to be drawn = end of array');
 
-      // Clear pending state
       G.pendingExplodingKitten = null;
       G.pendingPlayer = null;
 

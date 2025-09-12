@@ -1,11 +1,5 @@
 /**
- * ExplodingKittenPlacement Component - Interface for placing Exploding Kittens back in deck
- * 
- * Implements Task 3.3: Game Area and Status Display Components
- * - Exploding Kitten placement interface with position selection (top, middle, bottom)
- * - Modal overlay for critical game actions
- * - Clear visual indicators and instructions
- * - Uses Tailwind CSS for consistent styling and clear visual hierarchy
+ * Modal for placing Exploding Kittens back into the deck after defusing
  */
 
 const ExplodingKittenPlacement = ({ 
@@ -16,14 +10,12 @@ const ExplodingKittenPlacement = ({
 }) => {
   if (!isVisible) return null;
 
-  // Handle placement with different position options
   const handlePlacement = (position) => {
     if (onPlaceKitten) {
       onPlaceKitten(position);
     }
   };
 
-  // Calculate specific positions
   const topPosition = 0;
   const middlePosition = Math.floor(deckLength / 2);
   const bottomPosition = deckLength;
@@ -31,7 +23,6 @@ const ExplodingKittenPlacement = ({
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
       <div className="bg-gradient-to-br from-red-900 to-red-700 rounded-xl p-8 max-w-md w-full mx-4 border-2 border-red-500 shadow-2xl shadow-red-500/50">
-        {/* Header */}
         <div className="text-center mb-6">
           <div className="text-6xl mb-4 animate-bounce">💥🐱</div>
           <h3 className="text-2xl font-bold text-white mb-2">
@@ -42,7 +33,6 @@ const ExplodingKittenPlacement = ({
           </p>
         </div>
 
-        {/* Instructions */}
         <div className="bg-red-800/50 rounded-lg p-4 mb-6 border border-red-600/50">
           <p className="text-white text-center font-semibold mb-2">
             🎯 Choose where to place it back in the deck:
@@ -52,13 +42,11 @@ const ExplodingKittenPlacement = ({
           </div>
         </div>
 
-        {/* Deck Visualization */}
         <div className="mb-6">
           <div className="text-center text-white mb-3">
             <div className="text-sm opacity-80">Current deck: {deckLength} cards</div>
           </div>
           
-          {/* Visual deck representation */}
           <div className="flex justify-center items-center space-x-2 mb-4">
             <div className="flex flex-col items-center">
               <div className="text-xs text-white mb-1">Top</div>
@@ -81,9 +69,7 @@ const ExplodingKittenPlacement = ({
           </div>
         </div>
 
-        {/* Placement Options */}
         <div className="space-y-3">
-          {/* Top of Deck */}
           <button
             onClick={() => handlePlacement(topPosition)}
             className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 hover:shadow-lg border-2 border-red-500"
@@ -102,7 +88,6 @@ const ExplodingKittenPlacement = ({
             </div>
           </button>
 
-          {/* Middle of Deck */}
           <button
             onClick={() => handlePlacement(middlePosition)}
             className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-4 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 hover:shadow-lg border-2 border-orange-500"
@@ -121,7 +106,6 @@ const ExplodingKittenPlacement = ({
             </div>
           </button>
 
-          {/* Bottom of Deck */}
           <button
             onClick={() => handlePlacement(bottomPosition)}
             className="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-4 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 hover:shadow-lg border-2 border-yellow-500"
@@ -141,7 +125,6 @@ const ExplodingKittenPlacement = ({
           </button>
         </div>
 
-        {/* Custom Position Option */}
         <div className="mt-4 pt-4 border-t border-red-600/50">
           <div className="text-center">
             <div className="text-white text-sm opacity-80 mb-2">
