@@ -20,16 +20,15 @@ export const CARD_TYPES = {
 
 // Phase 1 deck composition for 4 players
 export const PHASE1_DECK_CONFIG = {
-  // Core dangerous cards - TEMPORARILY INCREASED FOR TESTING
-  [CARD_TYPES.EXPLODING]: 8, // Increased from 3 to 8 for easier testing
-  [CARD_TYPES.DEFUSE]: 8,    // Increased from 6 to 8 for testing
+  [CARD_TYPES.EXPLODING]: 3,
+  [CARD_TYPES.DEFUSE]: 6,
   // Action cards
   [CARD_TYPES.SKIP]: 4,
   [CARD_TYPES.FAVOR]: 4,
   [CARD_TYPES.SHUFFLE]: 4,
   [CARD_TYPES.ATTACK]: 4,
-  [CARD_TYPES.SEE_FUTURE]: 4,
-  [CARD_TYPES.CAT]: 12       // 3 different types, 4 of each
+  [CARD_TYPES.SEE_FUTURE]: 5,
+  [CARD_TYPES.CAT]: 20       // 5 different types, 4 of each
 };
 
 // Total cards calculation: 3 + 6 + 47 = 56 cards
@@ -183,8 +182,10 @@ export function createCatCards() {
   const cards = [];
   const catTypes = [
     { name: 'Tacocat', emoji: '🌮🐱' },
-    { name: 'Rainbow Cat', emoji: '🌈🐱' },
-    { name: 'Potato Cat', emoji: '🥔🐱' }
+    { name: 'Rainbow-ralphing Cat', emoji: '🌈🐱' },
+    { name: 'Potato Cat', emoji: '🥔🐱' },
+    { name: 'Beard Cat', emoji: '🧔🐱' },
+    { name: 'Cattermelon', emoji: '🍉🐱' }
   ];
 
   for (let typeIndex = 0; typeIndex < catTypes.length; typeIndex++) {
