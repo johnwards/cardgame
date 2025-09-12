@@ -86,15 +86,15 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
       )}
 
       {/* Compact Top Header */}
-      <div className="bg-white/20 backdrop-blur-md text-white px-6 py-4 border-b border-white/20 shadow-lg">
+      <div className="bg-white/20 backdrop-blur-md text-white px-6 py-4 border-b border-white/20 shadow-lg mobile-header">
         <div className="flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <h1 className="text-2xl font-black tracking-wide text-white drop-shadow-lg">💥 EXPLODING KITTENS 💥</h1>
-            <div className="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-bold border border-white/30">
+          <div className="flex items-center gap-2 lg:gap-4">
+            <h1 className="text-xl lg:text-2xl font-black tracking-wide text-white drop-shadow-lg">💥 EXPLODING KITTENS 💥</h1>
+            <div className="bg-white/20 backdrop-blur-sm px-2 lg:px-3 py-1 rounded-full text-xs lg:text-sm font-bold border border-white/30">
               Turn {ctx.turn}
             </div>
           </div>
-          <div className="text-right text-sm">
+          <div className="text-right text-xs lg:text-sm">
             <div className="font-bold text-white drop-shadow">Current: {currentPlayer.name}</div>
             <div className={ctx.currentPlayer === playerID ? 'text-green-200 font-bold' : 'text-gray-200'}>
               {ctx.currentPlayer === playerID ? '⚡ YOUR TURN!' : '⏳ Waiting...'}
@@ -158,46 +158,46 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
         <div className="flex-1 flex flex-col">
 
           {/* Game Status Banner */}
-          <div className="bg-gradient-to-r from-purple-600/80 to-blue-600/80 backdrop-blur-sm text-white p-4 border-b-2 border-yellow-400/50">
+          <div className="bg-gradient-to-r from-purple-600/80 to-blue-600/80 backdrop-blur-sm text-white p-3 lg:p-4 border-b-2 border-yellow-400/50 status-banner">
 
             {G.pendingExplodingKitten && G.pendingPlayer === playerID && (
-              <div className="bg-orange-500 rounded-lg p-3 mb-3 text-center animate-bounce">
-                <div className="font-black text-lg">🛡️ DEFUSE SUCCESSFUL!</div>
-                <div className="text-sm">Choose where to place the exploding kitten back in the deck!</div>
+              <div className="bg-orange-500 rounded-lg p-2 lg:p-3 mb-2 lg:mb-3 text-center animate-bounce">
+                <div className="font-black text-base lg:text-lg">🛡️ DEFUSE SUCCESSFUL!</div>
+                <div className="text-xs lg:text-sm mobile-compact-text">Choose where to place the exploding kitten back in the deck!</div>
               </div>
             )}
 
             {G.pendingExplodingKitten && G.pendingPlayer !== playerID && (
-              <div className="bg-orange-500/70 rounded-lg p-3 mb-3 text-center">
-                <div className="font-black text-lg">🛡️ {G.players[G.pendingPlayer]?.name} DEFUSED!</div>
-                <div className="text-sm">They're placing the exploding kitten back in the deck...</div>
+              <div className="bg-orange-500/70 rounded-lg p-2 lg:p-3 mb-2 lg:mb-3 text-center">
+                <div className="font-black text-base lg:text-lg">🛡️ {G.players[G.pendingPlayer]?.name} DEFUSED!</div>
+                <div className="text-xs lg:text-sm mobile-compact-text">They're placing the exploding kitten back in the deck...</div>
               </div>
             )}
 
             {G.pendingFavor && G.favorTarget === playerID && (
-              <div className="bg-purple-500 rounded-lg p-3 mb-3 text-center animate-pulse">
-                <div className="font-black text-lg">🤝 FAVOR REQUEST!</div>
-                <div className="text-sm">{G.players[G.pendingFavor]?.name} wants a card from you! Choose one from your hand below.</div>
+              <div className="bg-purple-500 rounded-lg p-2 lg:p-3 mb-2 lg:mb-3 text-center animate-pulse">
+                <div className="font-black text-base lg:text-lg">🤝 FAVOR REQUEST!</div>
+                <div className="text-xs lg:text-sm mobile-compact-text">{G.players[G.pendingFavor]?.name} wants a card from you! Choose one from your hand below.</div>
               </div>
             )}
 
             {G.pendingFavor && G.favorTarget !== playerID && (
-              <div className="bg-purple-500/70 rounded-lg p-3 mb-3 text-center">
-                <div className="font-black text-lg">🤝 FAVOR IN PROGRESS</div>
-                <div className="text-sm">{G.players[G.pendingFavor]?.name} is waiting for {G.players[G.favorTarget]?.name} to give them a card...</div>
+              <div className="bg-purple-500/70 rounded-lg p-2 lg:p-3 mb-2 lg:mb-3 text-center">
+                <div className="font-black text-base lg:text-lg">🤝 FAVOR IN PROGRESS</div>
+                <div className="text-xs lg:text-sm mobile-compact-text">{G.players[G.pendingFavor]?.name} is waiting for {G.players[G.favorTarget]?.name} to give them a card...</div>
               </div>
             )}
 
             {humanPlayer.isEliminated && (
-              <div className="bg-red-600 rounded-lg p-3 mb-3 text-center">
-                <div className="font-black text-lg">💀 YOU'RE OUT!</div>
-                <div className="text-sm">You drew an exploding kitten without a defuse card! Watch the chaos unfold...</div>
+              <div className="bg-red-600 rounded-lg p-2 lg:p-3 mb-2 lg:mb-3 text-center">
+                <div className="font-black text-base lg:text-lg">💀 YOU'RE OUT!</div>
+                <div className="text-xs lg:text-sm mobile-compact-text">You drew an exploding kitten without a defuse card! Watch the chaos unfold...</div>
               </div>
             )}
 
             {/* Current Turn Status */}
             <div className="text-center">
-              <div className="text-lg font-bold">
+              <div className="text-sm lg:text-lg font-bold">
                 {currentPlayer.isCPU && ctx.currentPlayer !== playerID && (
                   <span className="animate-pulse">🤖 {currentPlayer.name} is thinking...</span>
                 )}
@@ -213,35 +213,35 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
 
           {/* Main Deck Area */}
           <div className="flex-1 flex items-center justify-center bg-black/10 backdrop-blur-sm">
-            <div className="flex items-center gap-16">
+            <div className="flex items-center gap-8 lg:gap-16 center-game-cards">
 
               {/* Draw Pile */}
               <div className="text-center group">
-                <div className="bg-white rounded-2xl p-8 shadow-2xl transform group-hover:scale-105 transition-all duration-300 border-4 border-blue-400">
-                  <div className="text-6xl mb-4">🎴</div>
-                  <div className="text-gray-800 font-black text-xl">DRAW PILE</div>
-                  <div className="text-blue-600 font-bold text-lg">{G.deck?.length || 0} CARDS</div>
+                <div className="bg-white rounded-2xl p-4 lg:p-8 shadow-2xl transform group-hover:scale-105 transition-all duration-300 border-4 border-blue-400 center-game-card">
+                  <div className="text-4xl lg:text-6xl mb-2 lg:mb-4">🎴</div>
+                  <div className="text-gray-800 font-black text-base lg:text-xl">DRAW PILE</div>
+                  <div className="text-blue-600 font-bold text-sm lg:text-lg">{G.deck?.length || 0} CARDS</div>
                 </div>
               </div>
 
               {/* VS Divider */}
-              <div className="text-center">
-                <div className="text-6xl text-white/50 font-black transform rotate-12 animate-spin-slow">
+              <div className="text-center vs-divider">
+                <div className="text-4xl lg:text-6xl text-white/50 font-black transform rotate-12 animate-spin-slow">
                   ⚡
                 </div>
               </div>
 
               {/* Discard Pile */}
               <div className="text-center group">
-                <div className="bg-white rounded-2xl p-8 shadow-2xl transform group-hover:scale-105 transition-all duration-300 border-4 border-orange-400">
-                  <div className="text-6xl mb-4">
+                <div className="bg-white rounded-2xl p-4 lg:p-8 shadow-2xl transform group-hover:scale-105 transition-all duration-300 border-4 border-orange-400 center-game-card">
+                  <div className="text-4xl lg:text-6xl mb-2 lg:mb-4">
                     {G.discardPile?.length > 0 && G.discardPile[G.discardPile.length - 1]?.emoji ?
                       G.discardPile[G.discardPile.length - 1].emoji : '🗂️'}
                   </div>
-                  <div className="text-gray-800 font-black text-xl">DISCARD</div>
-                  <div className="text-orange-600 font-bold text-lg">{G.discardPile?.length || 0} CARDS</div>
+                  <div className="text-gray-800 font-black text-base lg:text-xl">DISCARD</div>
+                  <div className="text-orange-600 font-bold text-sm lg:text-lg">{G.discardPile?.length || 0} CARDS</div>
                   {G.discardPile?.length > 0 && (
-                    <div className="text-gray-600 text-sm mt-1 font-bold">
+                    <div className="text-gray-600 text-xs lg:text-sm mt-1 font-bold mobile-compact-text">
                       {G.discardPile[G.discardPile.length - 1]?.name}
                     </div>
                   )}
@@ -278,7 +278,7 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
         </div>
 
         {/* Right Side - Player Hand */}
-        <div className="w-96 bg-black/10 backdrop-blur-sm border-l-4 border-yellow-400/50 flex flex-col">
+        <div className="w-96 sidebar-right bg-black/10 backdrop-blur-sm border-l-4 border-yellow-400/50 flex flex-col">
           <PlayerHand
             player={humanPlayer}
             isActive={isActive}

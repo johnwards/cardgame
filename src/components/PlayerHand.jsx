@@ -224,25 +224,25 @@ const PlayerHand = ({
       )}
 
       {/* Player Header */}
-      <div className="bg-white/20 backdrop-blur-md text-white p-4 border-b border-white/20">
+      <div className="bg-white/20 backdrop-blur-md text-white p-3 lg:p-4 border-b border-white/20">
         <div className="flex justify-between items-center">
-          <h2 className="text-xl font-black text-white drop-shadow-lg">YOUR HAND</h2>
+          <h2 className="text-lg lg:text-xl font-black text-white drop-shadow-lg">YOUR HAND</h2>
           <div className="text-right">
-            <div className="text-lg font-bold text-white drop-shadow-lg">{player.hand?.length || 0} CARDS</div>
+            <div className="text-base lg:text-lg font-bold text-white drop-shadow-lg">{player.hand?.length || 0} CARDS</div>
             {player.isEliminated && (
-              <div className="text-red-400 text-sm font-bold">💀 ELIMINATED</div>
+              <div className="text-red-400 text-xs lg:text-sm font-bold">💀 ELIMINATED</div>
             )}
           </div>
         </div>
       </div>
 
       {/* Turn Status & Draw Button */}
-      <div className="bg-white/10 backdrop-blur-sm p-4 border-b border-white/20">
-        <div className="flex flex-col gap-3">
+      <div className="bg-white/10 backdrop-blur-sm p-3 lg:p-4 border-b border-white/20">
+        <div className="flex flex-col gap-2 lg:gap-3">
 
           {/* Turn Indicator */}
           <div className={`
-            text-center py-2 px-4 rounded-full font-bold text-sm border backdrop-blur-sm
+            text-center py-2 px-3 lg:px-4 rounded-full font-bold text-xs lg:text-sm border backdrop-blur-sm
             ${isCurrentPlayer && isActive
               ? 'bg-green-500/80 text-white border-green-400 animate-gentle-pulse'
               : 'bg-gray-600/80 text-gray-200 border-gray-500'
@@ -262,7 +262,7 @@ const PlayerHand = ({
             onClick={handleDrawCard}
             disabled={!drawEnabled}
             className={`
-              w-full py-4 rounded-xl font-black text-lg transition-all duration-200 transform border backdrop-blur-sm
+              w-full py-3 lg:py-4 rounded-xl font-black text-base lg:text-lg transition-all duration-200 transform border backdrop-blur-sm
               ${drawEnabled
                 ? 'bg-blue-600/90 hover:bg-blue-700/90 text-white border-blue-400 hover:scale-105 shadow-lg cursor-pointer'
                 : 'bg-gray-600/60 text-gray-300 border-gray-500 cursor-not-allowed opacity-50'
@@ -271,24 +271,24 @@ const PlayerHand = ({
           >
             🎴 DRAW CARD
             {deckCount > 0 && (
-              <div className="text-sm opacity-80">({deckCount} left)</div>
+              <div className="text-xs lg:text-sm opacity-80 mobile-compact-text">({deckCount} left)</div>
             )}
           </button>
         </div>
       </div>      {/* Cards Section */}
-      <div className="flex-1 p-4 overflow-y-auto">
+      <div className="flex-1 p-3 lg:p-4 overflow-y-auto">
         {player.hand && player.hand.length > 0 ? (
           <>
             {/* Special Instructions */}
             {needsToGiveFavorCard && (
-              <div className="bg-purple-600/80 rounded-lg p-3 mb-4 text-center text-white animate-pulse">
-                <div className="font-bold text-sm">🤝 GIVE A CARD</div>
-                <div className="text-xs">Click any card to give to {gameState.players?.[gameState.pendingFavor]?.name}</div>
+              <div className="bg-purple-600/80 rounded-lg p-2 lg:p-3 mb-3 lg:mb-4 text-center text-white animate-pulse">
+                <div className="font-bold text-xs lg:text-sm">🤝 GIVE A CARD</div>
+                <div className="text-xs mobile-compact-text">Click any card to give to {gameState.players?.[gameState.pendingFavor]?.name}</div>
               </div>
             )}
 
             {/* Cards Grid */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2 lg:gap-3">
               {player.hand.map((card, index) => {
                 let canPlayThisCard, cardAction, cardBgStyle;
 
@@ -331,7 +331,7 @@ const PlayerHand = ({
                   <div
                     key={card.id}
                     className={`
-                      bg-white text-gray-800 rounded-lg p-3 text-center transition-all duration-200 transform hover:scale-105 hover:shadow-lg
+                      bg-white text-gray-800 rounded-lg p-2 lg:p-3 text-center transition-all duration-200 transform hover:scale-105 hover:shadow-lg hand-card
                       ${cardBgStyle}
                       ${card.type === 'exploding'
                         ? 'border-2 border-red-500 bg-red-50'
@@ -346,35 +346,35 @@ const PlayerHand = ({
                     `}
                     onClick={() => canPlayThisCard && handleCardPlay(index)}
                   >
-                    <div className="text-2xl mb-1">{card.emoji}</div>
+                    <div className="text-xl lg:text-2xl mb-1">{card.emoji}</div>
 
-                    <div className="font-bold text-xs mb-1 leading-tight">
+                    <div className="font-bold text-xs leading-tight mobile-compact-text">
                       {card.name}
                     </div>
 
-                    <div className="text-xs opacity-70 leading-tight">
+                    <div className="text-xs opacity-70 leading-tight mobile-compact-text">
                       {card.type}
                     </div>
 
                     {card.type === 'cat' && hasPair && (
-                      <div className="mt-1 text-xs font-bold text-orange-600">
+                      <div className="mt-1 text-xs font-bold text-orange-600 mobile-compact-text">
                         PAIR!
                       </div>
                     )}
 
                     {card.type === 'exploding' && (
-                      <div className="mt-1 text-xs font-bold text-red-600">
+                      <div className="mt-1 text-xs font-bold text-red-600 mobile-compact-text">
                         DANGER!
                       </div>
                     )}
                     {card.type === 'defuse' && (
-                      <div className="mt-1 text-xs font-bold text-green-600">
+                      <div className="mt-1 text-xs font-bold text-green-600 mobile-compact-text">
                         SAFETY
                       </div>
                     )}
 
                     {canPlayThisCard && (
-                      <div className={`mt-1 text-xs opacity-60 font-bold ${needsToGiveFavorCard ? 'text-purple-600' : 'text-blue-600'}`}>
+                      <div className={`mt-1 text-xs opacity-60 font-bold mobile-compact-text ${needsToGiveFavorCard ? 'text-purple-600' : 'text-blue-600'}`}>
                         {cardAction}
                       </div>
                     )}
@@ -384,8 +384,8 @@ const PlayerHand = ({
             </div>
 
             {/* Help Text */}
-            <div className="mt-4 text-center">
-              <div className="text-xs opacity-70 text-white bg-black/20 rounded-lg p-2">
+            <div className="mt-3 lg:mt-4 text-center">
+              <div className="text-xs opacity-70 text-white bg-black/20 rounded-lg p-2 mobile-compact-text">
                 {needsToGiveFavorCard ? (
                   <>🤝 Click any card to complete the favor</>
                 ) : cardsPlayable ? (
@@ -397,13 +397,13 @@ const PlayerHand = ({
             </div>
           </>
         ) : (
-          <div className="text-center py-8 text-white/60">
-            <div className="text-4xl mb-3">🃏</div>
-            <p className="text-lg font-bold">No Cards</p>
+          <div className="text-center py-6 lg:py-8 text-white/60">
+            <div className="text-3xl lg:text-4xl mb-3">🃏</div>
+            <p className="text-base lg:text-lg font-bold">No Cards</p>
             {player.isEliminated ? (
-              <p className="text-sm mt-2 text-red-400">You were eliminated!</p>
+              <p className="text-xs lg:text-sm mt-2 text-red-400 mobile-compact-text">You were eliminated!</p>
             ) : (
-              <p className="text-sm mt-2">Draw cards to build your hand</p>
+              <p className="text-xs lg:text-sm mt-2 mobile-compact-text">Draw cards to build your hand</p>
             )}
           </div>
         )}
