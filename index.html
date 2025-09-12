@@ -1,132 +1,253 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Exploding Kittens</title>
-    
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="/manifest.json" />
-    
-    <!-- PWA and Fullscreen Meta Tags -->
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Exploding Kittens" />
-    
-    <!-- Prevent zooming and enforce landscape -->
-    <meta name="format-detection" content="telephone=no" />
-    <meta name="msapplication-tap-highlight" content="no" />
-    
-    <!-- CSS for hiding address bar -->
-    <style>
-      /* Force fullscreen behavior */
-      html, body {
-        height: 100vh;
-        height: 100dvh; /* Dynamic viewport height for mobile */
-        overflow: hidden;
-        position: fixed;
-        width: 100%;
-        top: 0;
-        left: 0;
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Exploding Kittens</title>
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/cardgame/manifest.json" />
+
+  <!-- PWA and Fullscreen Meta Tags -->
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Exploding Kittens" />
+
+  <!-- Prevent zooming and enforce landscape -->
+  <meta name="format-detection" content="telephone=no" />
+  <meta name="msapplication-tap-highlight" content="no" />
+
+  <!-- CSS for hiding address bar -->
+  <style>
+    /* CSS Custom Properties for viewport */
+    :root {
+      --vh: 1vh;
+    }
+
+    /* Force fullscreen behavior */
+    html,
+    body {
+      height: 100vh;
+      height: calc(var(--vh, 1vh) * 100);
+      /* Use custom property for iOS */
+      overflow: hidden;
+      position: fixed;
+      width: 100%;
+      top: 0;
+      left: 0;
+      margin: 0;
+      padding: 0;
+    }
+
+    #root {
+      height: 100vh;
+      height: calc(var(--vh, 1vh) * 100);
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* iOS Safari specific fixes */
+    @supports (-webkit-touch-callout: none) {
+      html,
+      body {
+        height: -webkit-fill-available;
+        min-height: -webkit-fill-available;
       }
-      
+
       #root {
-        height: 100vh;
-        height: 100dvh;
-        overflow: hidden;
+        height: -webkit-fill-available;
+        min-height: -webkit-fill-available;
       }
-      
-      /* Hide iOS Safari bottom bar */
-      @supports (-webkit-touch-callout: none) {
-        body {
-          padding-bottom: env(safe-area-inset-bottom);
-        }
+
+      body {
+        padding-bottom: env(safe-area-inset-bottom);
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
       }
-    </style>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-    
-    <!-- Fullscreen and address bar hiding script -->
-    <script>
-      // Function to hide address bar on mobile
-      function hideAddressBar() {
-        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-          // Scroll to hide address bar
-          setTimeout(() => {
-            window.scrollTo(0, 1);
-          }, 100);
-          
-          // Additional attempt after a longer delay
-          setTimeout(() => {
-            window.scrollTo(0, 1);
-          }, 1000);
-        }
+    }
+
+    /* Additional mobile optimizations */
+    @media screen and (max-height: 500px) {
+      /* Very small screens - maximize space */
+      html,
+      body,
+      #root {
+        height: 100vh !important;
+        height: 100svh !important;
+        /* Small viewport height */
       }
-      
-      // Function to request fullscreen
-      function requestFullscreen() {
-        const elem = document.documentElement;
-        
-        if (elem.requestFullscreen) {
-          elem.requestFullscreen();
-        } else if (elem.webkitRequestFullscreen) {
-          elem.webkitRequestFullscreen();
-        } else if (elem.msRequestFullscreen) {
-          elem.msRequestFullscreen();
-        }
-      }
-      
-      // Handle orientation change
-      function handleOrientationChange() {
-        // Small delay to allow orientation change to complete
-        setTimeout(() => {
-          hideAddressBar();
-          
-          // For iOS, also try to resize
-          if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-            window.dispatchEvent(new Event('resize'));
-          }
-        }, 100);
-      }
-      
-      // Add event listeners
-      window.addEventListener('orientationchange', handleOrientationChange);
-      window.addEventListener('resize', hideAddressBar);
-      
-      // Hide address bar on initial load
-      window.addEventListener('load', () => {
-        hideAddressBar();
-        
-        // Auto-request fullscreen on first user interaction (for browsers that support it)
-        const requestFullscreenOnInteraction = () => {
-          if (/Android/i.test(navigator.userAgent)) {
-            requestFullscreen();
-          }
-          // Remove listener after first interaction
-          document.removeEventListener('touchstart', requestFullscreenOnInteraction);
-          document.removeEventListener('click', requestFullscreenOnInteraction);
+    }
+
+    /* Prevent overscroll bounce on iOS */
+    body {
+      overscroll-behavior: none;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Hide any scrollbars */
+    html {
+      scrollbar-width: none;
+      /* Firefox */
+      -ms-overflow-style: none;
+      /* Internet Explorer 10+ */
+    }
+
+    html::-webkit-scrollbar {
+      /* WebKit */
+      width: 0;
+      height: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+
+  <!-- Fullscreen and address bar hiding script -->
+  <script>
+    // Function to hide address bar on mobile - more aggressive approach
+    function hideAddressBar() {
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        // Multiple attempts to hide address bar
+        const hideBar = () => {
+          window.scrollTo(0, 1);
+          document.body.scrollTop = 1;
         };
+
+        // Immediate attempt
+        hideBar();
+
+        // Multiple delayed attempts
+        setTimeout(hideBar, 0);
+        setTimeout(hideBar, 100);
+        setTimeout(hideBar, 500);
+        setTimeout(hideBar, 1000);
         
-        document.addEventListener('touchstart', requestFullscreenOnInteraction);
-        document.addEventListener('click', requestFullscreenOnInteraction);
+        // Force a minimal scroll to trigger address bar hiding
+        if (window.scrollY === 0) {
+          window.scrollTo(0, 1);
+        }
+      }
+    }
+
+    // Function to request fullscreen
+    function requestFullscreen() {
+      const elem = document.documentElement;
+
+      if (elem.requestFullscreen) {
+        elem.requestFullscreen();
+      } else if (elem.webkitRequestFullscreen) {
+        elem.webkitRequestFullscreen();
+      } else if (elem.msRequestFullscreen) {
+        elem.msRequestFullscreen();
+      }
+    }
+
+    // Handle orientation change
+    function handleOrientationChange() {
+      // Small delay to allow orientation change to complete
+      setTimeout(() => {
+        hideAddressBar();
+
+        // For iOS, also try to resize and force reflow
+        if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+          // Force a reflow
+          document.body.style.height = '100vh';
+          document.body.style.height = '100dvh';
+          
+          // Dispatch resize event
+          window.dispatchEvent(new Event('resize'));
+          
+          // Additional address bar hiding attempts
+          setTimeout(hideAddressBar, 100);
+          setTimeout(hideAddressBar, 300);
+        }
+      }, 100);
+    }
+
+    // Viewport height fix for iOS
+    function setViewportHeight() {
+      // Set CSS custom property with actual viewport height
+      document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+    }
+
+    // Add event listeners
+    window.addEventListener('orientationchange', handleOrientationChange);
+    window.addEventListener('resize', () => {
+      hideAddressBar();
+      setViewportHeight();
+    });
+
+    // Set initial viewport height
+    setViewportHeight();
+
+    // Hide address bar on initial load
+    window.addEventListener('load', () => {
+      hideAddressBar();
+      setViewportHeight();
+
+      // Auto-request fullscreen on first user interaction (for browsers that support it)
+      const requestFullscreenOnInteraction = () => {
+        if (/Android/i.test(navigator.userAgent)) {
+          requestFullscreen();
+        }
+        hideAddressBar();
+        // Remove listener after first interaction
+        document.removeEventListener('touchstart', requestFullscreenOnInteraction, { once: true });
+        document.removeEventListener('click', requestFullscreenOnInteraction, { once: true });
+      };
+
+      document.addEventListener('touchstart', requestFullscreenOnInteraction, { once: true });
+      document.addEventListener('click', requestFullscreenOnInteraction, { once: true });
+    });
+
+    // Prevent default touch behaviors that might interfere with scrolling
+    document.addEventListener('touchmove', (e) => {
+      // Only prevent if we're not in a scrollable area
+      if (e.target.closest('.scrollable') === null) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    // Lock to landscape orientation if supported
+    if (screen.orientation && screen.orientation.lock) {
+      screen.orientation.lock('landscape-primary').catch(() => {
+        // Try without -primary suffix
+        if (screen.orientation.lock) {
+          screen.orientation.lock('landscape').catch(() => {
+            console.log('Orientation lock not supported');
+          });
+        }
+      });
+    }
+
+    // Additional iOS-specific handling
+    if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      // Force minimal UI on iOS
+      document.addEventListener('touchstart', hideAddressBar);
+      document.addEventListener('scroll', hideAddressBar);
+      
+      // Override viewport units for iOS
+      const updateIOSViewport = () => {
+        const vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+        
+        // Force body to use the calculated height
+        document.body.style.height = `${window.innerHeight}px`;
+      };
+      
+      window.addEventListener('resize', updateIOSViewport);
+      window.addEventListener('orientationchange', () => {
+        setTimeout(updateIOSViewport, 100);
       });
       
-      // Prevent default touch behaviors that might interfere
-      document.addEventListener('touchmove', (e) => {
-        e.preventDefault();
-      }, { passive: false });
-      
-      // Lock to landscape orientation if supported
-      if (screen.orientation && screen.orientation.lock) {
-        screen.orientation.lock('landscape').catch(() => {
-          // Orientation lock not supported or failed
-          console.log('Orientation lock not supported');
-        });
-      }
-    </script>
-  </body>
+      updateIOSViewport();
+    }
+  </script>
+</body>
+
 </html>

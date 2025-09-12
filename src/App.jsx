@@ -4,7 +4,7 @@ import { Local } from 'boardgame.io/multiplayer';
 import { RandomBot, MCTSBot } from 'boardgame.io/ai';
 import { ThinkingBot, FastThinkingBot, SlowThinkingBot } from './ai/ThinkingBot';
 import GameBoard from './components/GameBoard';
-import InstallPrompt from './components/InstallPrompt';
+import FullscreenButton from './components/FullscreenButton';
 import './index.css';
 
 const ExplodingKittensClient = Client({
@@ -24,7 +24,7 @@ const ExplodingKittensClient = Client({
 function App() {
   return (
     <div className="App">
-      <InstallPrompt />
+      <FullscreenButton />
       <ExplodingKittensClient playerID="0" />
     </div>
   );
