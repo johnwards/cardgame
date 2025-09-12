@@ -1,10 +1,3 @@
-/**
- * SeeTheFutureModal Component
- * 
- * Shows the top 3 cards of the deck to the human player when they play a See the Future card.
- * AI players don't see this - they get no benefit from the card.
- */
-
 const SeeTheFutureModal = ({ futureCards, onDismiss }) => {
   if (!futureCards || futureCards.length === 0) {
     return null;

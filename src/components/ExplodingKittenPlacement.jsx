@@ -1,7 +1,3 @@
-/**
- * Modal for placing Exploding Kittens back into the deck after defusing
- */
-
 const ExplodingKittenPlacement = ({
   isVisible,
   deckLength,
@@ -153,7 +149,6 @@ const ExplodingKittenPlacement = ({
           </div>
         </div>
 
-        {/* Warning Message */}
         <div className="mt-6 bg-yellow-900/50 border border-yellow-600/50 rounded-lg p-3">
           <div className="text-yellow-200 text-sm text-center">
             ⚠️ Choose carefully! This decision affects all players' safety.

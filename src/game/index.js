@@ -1,8 +1,3 @@
-/**
- * Exploding Kittens Game Implementation
- * 4-player game with AI opponents using boardgame.io
- */
-
 import { INVALID_MOVE } from 'boardgame.io/core';
 import { setupGameDeck, CARD_TYPES } from '../constants/cards.js';
 
@@ -41,7 +36,7 @@ const ExplodingKittensGame = {
       waitingForFavor: null,
       seeTheFutureCards: null,
       seeTheFuturePlayer: null,
-      attackNotification: null // { attackerName, targetPlayer, timestamp }
+      attackNotification: null
     };
 
     console.log('Phase C Setup complete:');
@@ -80,9 +75,7 @@ const ExplodingKittensGame = {
           if (G.turnsRemaining[playerID] && G.turnsRemaining[playerID] > 1) {
             G.turnsRemaining[playerID]--;
             console.log('Player', playerID, 'skipped one turn, has', G.turnsRemaining[playerID], 'turns remaining');
-            // Don't end turn, player continues
           } else {
-            // Reset turns and end turn normally
             G.turnsRemaining[playerID] = 1;
             events.endTurn();
           }
@@ -97,14 +90,13 @@ const ExplodingKittensGame = {
           console.log('Attack card played - forcing next player to take 2 turns');
           const nextPlayerIndex = (parseInt(playerID) + 1) % Object.keys(G.players).length;
           let nextPlayer = nextPlayerIndex;
-          // Skip eliminated players
           while (G.players[nextPlayer]?.isEliminated) {
             nextPlayer = (nextPlayer + 1) % Object.keys(G.players).length;
           }
           G.turnsRemaining[nextPlayer] = (G.turnsRemaining[nextPlayer] || 1) + 1;
           console.log('Next player', nextPlayer, 'now has', G.turnsRemaining[nextPlayer], 'turns');
 
-          // If a CPU attacked the human player (player 0), show notification
+          // Show notification when CPU attacks human player
           if (G.players[playerID]?.isCPU && nextPlayer === 0) {
             console.log('CPU', playerID, 'attacked human player - setting notification');
             G.attackNotification = {
@@ -134,7 +126,7 @@ const ExplodingKittensGame = {
           }
           console.log('Favor card played - requesting card from player', targetPlayerID);
 
-          // For CPU players, immediately give a random card and complete the move
+          // CPU targets give cards immediately, humans require selection
           if (G.players[targetPlayerID].isCPU) {
             console.log('Target is CPU, immediately giving random card');
             const targetHand = G.players[targetPlayerID].hand;
@@ -143,11 +135,10 @@ const ExplodingKittensGame = {
             G.players[playerID].hand.push(givenCard);
             console.log('CPU gave card:', givenCard.name);
           } else {
-            // For human players, set up pending favor state
-            // The current player (AI) will be stuck waiting until human responds
+            // AI waits for human to select card via UI
             G.pendingFavor = playerID;
             G.favorTarget = targetPlayerID;
-            G.waitingForFavor = playerID; // Mark this player as waiting for favor
+            G.waitingForFavor = playerID;
             console.log('AI player', playerID, 'is now waiting for favor from human', targetPlayerID);
           }
           break;
@@ -158,9 +149,9 @@ const ExplodingKittensGame = {
 
         case CARD_TYPES.SEE_FUTURE:
           console.log('See the Future card played');
-          // For human players, store the top 3 cards to show them
+          // Only show cards to human players
           if (!G.players[playerID].isCPU) {
-            const futureCards = G.deck.slice(-3).reverse(); // Top 3 cards (next to be drawn first)
+            const futureCards = G.deck.slice(-3).reverse();
             G.seeTheFutureCards = futureCards;
             G.seeTheFuturePlayer = playerID;
             console.log('Human player can see future cards:', futureCards.map(c => c.name));
@@ -195,11 +186,9 @@ const ExplodingKittensGame = {
       const card = G.deck.pop();
       console.log('Drew card:', card.name, 'type:', card.type);
 
-      // Check if it's an exploding kitten
       if (card.type === CARD_TYPES.EXPLODING) {
         console.log('EXPLODING KITTEN DRAWN!');
 
-        // Check for defuse card
         const defuseIndex = G.players[playerID].hand.findIndex(
           c => c.type === CARD_TYPES.DEFUSE
         );
@@ -210,7 +199,6 @@ const ExplodingKittensGame = {
           console.log('🛡️ Player hand before defuse:', G.players[playerID].hand.length, 'cards');
           console.log('🛡️ Discard pile before defuse:', G.discardPile.length, 'cards');
 
-          // Player has defuse - remove it and discard it
           const defuseCard = G.players[playerID].hand.splice(defuseIndex, 1)[0];
           G.discardPile.push(defuseCard);
 
@@ -219,45 +207,36 @@ const ExplodingKittensGame = {
           console.log('🛡️ Discard pile after defuse:', G.discardPile.length, 'cards');
           console.log('🛡️ Defused card moved to discard:', defuseCard.name);
 
-          // Set state for exploding kitten placement
           G.pendingExplodingKitten = card;
           G.pendingPlayer = playerID;
 
           console.log('🛡️ Defuse used, awaiting exploding kitten placement');
 
-          // Don't end turn - wait for placement
           return;
         } else {
           console.log('💀 Player has no defuse card - ELIMINATED!');
           console.log('💀 Player', playerID, 'hand contents:', G.players[playerID].hand.map(c => c.type));
           console.log('💀 Player elimination status before:', G.players[playerID].isEliminated);
 
-          // Player has no defuse - eliminate them
           G.players[playerID].isEliminated = true;
 
           console.log('💀 PLAYER ELIMINATED!');
           console.log('💀 Player', playerID, 'elimination status after:', G.players[playerID].isEliminated);
           console.log('💀 Player name:', G.players[playerID].name);
 
-          // Don't add exploding kitten to hand - it exploded!
-
-          // Check win condition
           const alivePlayers = Object.values(G.players).filter(p => !p.isEliminated);
           console.log('💀 Players remaining alive:', alivePlayers.length);
           console.log('💀 Alive players:', alivePlayers.map(p => p.name));
 
           if (alivePlayers.length === 1) {
             console.log('Game over - single winner!');
-            // Game will end via endIf condition
           }
 
-          // End turn after elimination
           console.log('Ending turn after player elimination');
           events.endTurn();
           return;
         }
       } else {
-        // Regular card - add to hand
         G.players[playerID].hand.push(card);
         console.log('Regular card added to hand');
       }
@@ -293,9 +272,9 @@ const ExplodingKittensGame = {
 
       let actualPosition;
       if (position === 0) {
-        actualPosition = G.deck.length; // Top = end of array (next to draw)
+        actualPosition = G.deck.length; // Top = next to draw
       } else if (position === G.deck.length) {
-        actualPosition = 0; // Bottom = beginning of array
+        actualPosition = 0; // Bottom = last to draw
       } else {
         actualPosition = G.deck.length - position;
       }
@@ -314,13 +293,10 @@ const ExplodingKittensGame = {
       G.pendingExplodingKitten = null;
       G.pendingPlayer = null;
 
-      // Check if player has multiple turns from attack
       if (G.turnsRemaining[playerID] && G.turnsRemaining[playerID] > 1) {
         G.turnsRemaining[playerID]--;
         console.log('Player', playerID, 'placed exploding kitten, has', G.turnsRemaining[playerID], 'turns remaining');
-        // Don't end turn, player continues
       } else {
-        // Reset turns and end turn normally
         G.turnsRemaining[playerID] = 1;
         console.log('Exploding kitten placement ends turn - passing to next player');
         events.endTurn();
@@ -350,7 +326,6 @@ const ExplodingKittensGame = {
         return INVALID_MOVE;
       }
 
-      // Find matching cat cards
       const catCards = G.players[playerID].hand.filter(
         card => card.type === CARD_TYPES.CAT && card.name === catName
       );
@@ -360,7 +335,6 @@ const ExplodingKittensGame = {
         return INVALID_MOVE;
       }
 
-      // Remove 2 cat cards from hand and discard them
       const usedCards = [];
       for (let i = 0; i < 2; i++) {
         const cardIndex = G.players[playerID].hand.findIndex(
@@ -373,9 +347,8 @@ const ExplodingKittensGame = {
 
       G.discardPile.push(...usedCards);
 
-      // Steal random card from target
       const targetHand = G.players[targetPlayerID].hand;
-      const randomIndex = random.Die(targetHand.length) - 1; // Die returns 1-N, we need 0-N-1
+      const randomIndex = random.Die(targetHand.length) - 1;
       const stolenCard = targetHand.splice(randomIndex, 1)[0];
       G.players[playerID].hand.push(stolenCard);
 
@@ -392,7 +365,6 @@ const ExplodingKittensGame = {
         return INVALID_MOVE;
       }
 
-      // Clear the see the future state
       G.seeTheFutureCards = null;
       G.seeTheFuturePlayer = null;
 
@@ -404,7 +376,6 @@ const ExplodingKittensGame = {
       console.log('=== DISMISS ATTACK NOTIFICATION MOVE CALLED ===');
       console.log('playerID:', playerID);
 
-      // Clear the attack notification
       G.attackNotification = null;
 
       console.log('Attack notification dismissed');
@@ -417,38 +388,34 @@ const ExplodingKittensGame = {
       console.log('waitingForFavor state:', G.waitingForFavor);
       console.log('globalSelectedFavorCard:', globalSelectedFavorCard);
 
-      // If human has selected a card, complete the favor
+      // Complete favor if human has selected a card
       if (globalSelectedFavorCard !== null && globalSelectedFavorCard !== undefined) {
         console.log('Human selected card index:', globalSelectedFavorCard);
 
         const targetPlayerID = G.favorTarget;
         const favorRequesterID = G.pendingFavor;
 
-        // Validate the selected card
         if (globalSelectedFavorCard < 0 || globalSelectedFavorCard >= G.players[targetPlayerID].hand.length) {
           console.log('Invalid selected card index');
-          globalSelectedFavorCard = null; // Reset invalid selection
+          globalSelectedFavorCard = null;
           return;
         }
 
-        // Transfer the card
         const card = G.players[targetPlayerID].hand.splice(globalSelectedFavorCard, 1)[0];
         G.players[favorRequesterID].hand.push(card);
 
         console.log('FAVOR COMPLETED! Card transferred:', card.name);
         console.log('From player', targetPlayerID, 'to player', favorRequesterID);
 
-        // Clear favor state and global variable
         G.pendingFavor = null;
         G.favorTarget = null;
         G.waitingForFavor = null;
-        globalSelectedFavorCard = null; // Reset for next time
+        globalSelectedFavorCard = null;
 
         console.log('Favor state cleared - AI can now make normal moves');
         return;
       }
 
-      // Still waiting for human to select a card
       console.log('Still waiting for human to select card...');
 
       console.log('=== WAITING FOR FAVOR COMPLETE ===');
@@ -456,11 +423,7 @@ const ExplodingKittensGame = {
   },
 
   turn: {
-    // No minMoves or maxMoves - turns end explicitly via events.endTurn()
-    // Players can play multiple cards, but drawing always ends the turn
-
     onBegin: ({ G, ctx, events }) => {
-      // Skip eliminated players
       let currentPlayer = parseInt(ctx.currentPlayer);
       if (G.players[currentPlayer]?.isEliminated) {
         console.log('Skipping eliminated player:', currentPlayer);
@@ -496,7 +459,6 @@ const ExplodingKittensGame = {
     return false;
   },
 
-  // Phase C.2: Basic CPU AI Logic
   ai: {
     enumerate: (G, ctx) => {
       console.log('=== AI ENUMERATE CALLED ===');
@@ -505,14 +467,12 @@ const ExplodingKittensGame = {
 
       console.log('CPU player', playerID, 'is active, generating moves...');
 
-      // If this AI player is waiting for a favor, they can only wait
       if (G.waitingForFavor === playerID) {
         console.log('AI player', playerID, 'is waiting for favor - can only make waitingForFavor move');
         moves.push({ move: 'waitingForFavor', args: [] });
         return moves;
       }
 
-      // Handle pending exploding kitten placement first
       if (G.pendingExplodingKitten && G.pendingPlayer === playerID) {
         console.log('CPU needs to place exploding kitten');
         const deckLength = G.deck.length;
@@ -523,18 +483,13 @@ const ExplodingKittensGame = {
         return moves;
       }
 
-      // CPUs should never be in pending favor state since they give cards immediately
-      // No need to handle giveFavorCard moves for AI players
-
       const player = G.players[playerID];
       console.log('CPU player', playerID, 'hand size:', player.hand.length);
 
-      // Find other alive players for targeting
       const alivePlayerIDs = Object.keys(G.players).filter(
         id => id !== playerID && !G.players[id].isEliminated
       );
 
-      // Enumerate card plays
       for (let i = 0; i < player.hand.length; i++) {
         const card = player.hand[i];
 
@@ -556,7 +511,6 @@ const ExplodingKittensGame = {
             break;
 
           case CARD_TYPES.CAT: {
-            // Check for cat pairs
             const catName = card.name;
             const matchingCats = player.hand.filter(c =>
               c.type === CARD_TYPES.CAT && c.name === catName
@@ -574,7 +528,6 @@ const ExplodingKittensGame = {
           }
 
           case CARD_TYPES.DEFUSE:
-            // Never play defuse cards unless forced
             break;
 
           default:
@@ -584,7 +537,6 @@ const ExplodingKittensGame = {
         }
       }
 
-      // Always include draw card as an option (ends turn)
       moves.push({ move: 'drawCard', args: [] });
 
       console.log('Generated', moves.length, 'possible moves for CPU', playerID);
@@ -595,7 +547,6 @@ const ExplodingKittensGame = {
 
 console.log('Game definition created');
 
-// Export setter function for global variable
 export const setGlobalSelectedFavorCard = (cardIndex) => {
   globalSelectedFavorCard = cardIndex;
 };

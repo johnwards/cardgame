@@ -6,24 +6,20 @@ import { ThinkingBot, FastThinkingBot, SlowThinkingBot } from './ai/ThinkingBot'
 import GameBoard from './components/GameBoard';
 import './index.css';
 
-// Phase C.2: Client configuration - AI with thinking time for more natural gameplay
 const ExplodingKittensClient = Client({
   game: ExplodingKittensGame,
   board: GameBoard,
-  numPlayers: 4, // Phase A: Force 4 players
+  numPlayers: 4,
   debug: true,
   multiplayer: Local({
     bots: {
-      '1': ThinkingBot,         // Bot for player 1 - normal thinking speed
-      '2': FastThinkingBot,     // Bot for player 2 - faster decisions
-      '3': SlowThinkingBot      // Bot for player 3 - more deliberate
+      '1': ThinkingBot,
+      '2': FastThinkingBot,
+      '3': SlowThinkingBot
     }
   }),
 });
 
-/**
- * Main App component - renders the game client
- */
 function App() {
   return (
     <div className="App">

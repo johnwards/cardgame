@@ -1,7 +1,3 @@
-/**
- * Modal for selecting target players for card actions
- */
-
 const PlayerTargetSelection = ({
   players,
   currentPlayerID,
@@ -16,7 +12,6 @@ const PlayerTargetSelection = ({
     title
   });
 
-  // Get all valid target players (alive, not current player, have cards)
   const validTargets = Object.values(players || {}).filter(player =>
     player.id !== parseInt(currentPlayerID) &&
     !player.isEliminated &&

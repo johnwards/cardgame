@@ -1,7 +1,3 @@
-/**
- * AI Bots with artificial thinking delays to simulate human-like behavior
- */
-
 import { Bot } from 'boardgame.io/ai';
 
 export class ThinkingBot extends Bot {

@@ -3,12 +3,10 @@ import SeeTheFutureModal from './SeeTheFutureModal';
 import GameOverModal from './GameOverModal';
 import AttackNotification from './AttackNotification';
 
-// Import global variable setter from game file
 import { setGlobalSelectedFavorCard } from '../game/index';
 
 const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
 
-  // Debug logging to understand the issue
   console.log('GameBoard render - SIMPLIFIED DEBUG');
   console.log('playerID:', playerID);
   console.log('ctx.currentPlayer:', ctx?.currentPlayer);
@@ -17,7 +15,6 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
   console.log('moves available:', Object.keys(moves || {}));
   console.log('G.deck length:', G?.deck?.length);
 
-  // Comprehensive error handling
   if (!G) {
     return (
       <div className="p-8 text-red-600">
@@ -39,7 +36,6 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
     return <div className="p-8 text-red-600">Error: moves is null or undefined</div>;
   }
 
-  // Get player references safely
   const currentPlayer = G.players[ctx.currentPlayer];
   const humanPlayer = G.players[playerID];
 
@@ -54,7 +50,6 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
     return <div className="p-8 text-red-600">Error: humanPlayer is null or undefined</div>;
   }
 
-  // Handler for when human selects a card for favor (store in global variable)
   const handleGiveFavorCard = (cardIndex) => {
     console.log('=== STORING SELECTED FAVOR CARD ===');
     console.log('cardIndex:', cardIndex);
@@ -62,7 +57,6 @@ const GameBoard = ({ G, ctx, moves, playerID, isActive }) => {
     console.log('Card stored in global variable, waitingForFavor will pick it up');
   };
 
-  // Check if there's an attack notification for the human player
   const shouldShowAttackNotification = G.attackNotification &&
     G.attackNotification.targetPlayer === parseInt(playerID);
 

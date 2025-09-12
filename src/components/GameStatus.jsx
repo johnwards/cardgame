@@ -1,8 +1,3 @@
-/**
- * GameStatus Component - Turn indicators and status messages
- * 
- */
-
 const GameStatus = ({
   currentPlayer,
   players,
@@ -14,17 +9,13 @@ const GameStatus = ({
   gamePhase = 'playing',
   turnsRemaining = {}
 }) => {
-  // Get current player info
   const currentPlayerInfo = players[currentPlayer];
 
-  // Determine if it's the human player's turn
   const isHumanTurn = currentPlayer === playerID;
 
-  // Get alive players count
   const alivePlayers = Object.values(players).filter(p => !p.isEliminated);
   const eliminatedPlayers = Object.values(players).filter(p => p.isEliminated);
 
-  // Generate status message based on current state
   const getStatusMessage = () => {
     if (hasPendingExplodingKitten) {
       return {
@@ -34,7 +25,7 @@ const GameStatus = ({
       };
     }
 
-    // Check if human player has multiple turns due to attack
+    // Handle multiple turns from attack cards
     const humanTurnsRemaining = turnsRemaining[playerID] || 1;
     const hasMultipleTurns = humanTurnsRemaining > 1;
 
@@ -78,7 +69,6 @@ const GameStatus = ({
 
   const status = getStatusMessage();
 
-  // Get status styling based on type
   const getStatusStyling = (type) => {
     switch (type) {
       case 'active':
