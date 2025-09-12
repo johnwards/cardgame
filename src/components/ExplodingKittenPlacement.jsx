@@ -2,11 +2,11 @@
  * Modal for placing Exploding Kittens back into the deck after defusing
  */
 
-const ExplodingKittenPlacement = ({ 
-  isVisible, 
-  deckLength, 
+const ExplodingKittenPlacement = ({
+  isVisible,
+  deckLength,
   onPlaceKitten,
-  playerName = "You" 
+  playerName = "You"
 }) => {
   if (!isVisible) return null;
 
@@ -46,22 +46,22 @@ const ExplodingKittenPlacement = ({
           <div className="text-center text-white mb-3">
             <div className="text-sm opacity-80">Current deck: {deckLength} cards</div>
           </div>
-          
+
           <div className="flex justify-center items-center space-x-2 mb-4">
             <div className="flex flex-col items-center">
               <div className="text-xs text-white mb-1">Top</div>
               <div className="w-8 h-10 bg-blue-600 rounded border-2 border-blue-400 shadow-lg"></div>
             </div>
-            
+
             <div className="flex-1 h-0.5 bg-gradient-to-r from-blue-400 via-purple-400 to-blue-400"></div>
-            
+
             <div className="flex flex-col items-center">
               <div className="text-xs text-white mb-1">Middle</div>
               <div className="w-8 h-10 bg-purple-600 rounded border-2 border-purple-400 shadow-lg"></div>
             </div>
-            
+
             <div className="flex-1 h-0.5 bg-gradient-to-r from-purple-400 via-blue-400 to-purple-400"></div>
-            
+
             <div className="flex flex-col items-center">
               <div className="text-xs text-white mb-1">Bottom</div>
               <div className="w-8 h-10 bg-blue-600 rounded border-2 border-blue-400 shadow-lg"></div>
