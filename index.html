@@ -3,11 +3,130 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Exploding Kittens</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- PWA and Fullscreen Meta Tags -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Exploding Kittens" />
+    
+    <!-- Prevent zooming and enforce landscape -->
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="msapplication-tap-highlight" content="no" />
+    
+    <!-- CSS for hiding address bar -->
+    <style>
+      /* Force fullscreen behavior */
+      html, body {
+        height: 100vh;
+        height: 100dvh; /* Dynamic viewport height for mobile */
+        overflow: hidden;
+        position: fixed;
+        width: 100%;
+        top: 0;
+        left: 0;
+      }
+      
+      #root {
+        height: 100vh;
+        height: 100dvh;
+        overflow: hidden;
+      }
+      
+      /* Hide iOS Safari bottom bar */
+      @supports (-webkit-touch-callout: none) {
+        body {
+          padding-bottom: env(safe-area-inset-bottom);
+        }
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    
+    <!-- Fullscreen and address bar hiding script -->
+    <script>
+      // Function to hide address bar on mobile
+      function hideAddressBar() {
+        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+          // Scroll to hide address bar
+          setTimeout(() => {
+            window.scrollTo(0, 1);
+          }, 100);
+          
+          // Additional attempt after a longer delay
+          setTimeout(() => {
+            window.scrollTo(0, 1);
+          }, 1000);
+        }
+      }
+      
+      // Function to request fullscreen
+      function requestFullscreen() {
+        const elem = document.documentElement;
+        
+        if (elem.requestFullscreen) {
+          elem.requestFullscreen();
+        } else if (elem.webkitRequestFullscreen) {
+          elem.webkitRequestFullscreen();
+        } else if (elem.msRequestFullscreen) {
+          elem.msRequestFullscreen();
+        }
+      }
+      
+      // Handle orientation change
+      function handleOrientationChange() {
+        // Small delay to allow orientation change to complete
+        setTimeout(() => {
+          hideAddressBar();
+          
+          // For iOS, also try to resize
+          if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+            window.dispatchEvent(new Event('resize'));
+          }
+        }, 100);
+      }
+      
+      // Add event listeners
+      window.addEventListener('orientationchange', handleOrientationChange);
+      window.addEventListener('resize', hideAddressBar);
+      
+      // Hide address bar on initial load
+      window.addEventListener('load', () => {
+        hideAddressBar();
+        
+        // Auto-request fullscreen on first user interaction (for browsers that support it)
+        const requestFullscreenOnInteraction = () => {
+          if (/Android/i.test(navigator.userAgent)) {
+            requestFullscreen();
+          }
+          // Remove listener after first interaction
+          document.removeEventListener('touchstart', requestFullscreenOnInteraction);
+          document.removeEventListener('click', requestFullscreenOnInteraction);
+        };
+        
+        document.addEventListener('touchstart', requestFullscreenOnInteraction);
+        document.addEventListener('click', requestFullscreenOnInteraction);
+      });
+      
+      // Prevent default touch behaviors that might interfere
+      document.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+      }, { passive: false });
+      
+      // Lock to landscape orientation if supported
+      if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock('landscape').catch(() => {
+          // Orientation lock not supported or failed
+          console.log('Orientation lock not supported');
+        });
+      }
+    </script>
   </body>
 </html>

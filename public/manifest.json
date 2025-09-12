@@ -1,0 +1,17 @@
+{
+  "name": "Exploding Kittens",
+  "short_name": "ExplodingKittens",
+  "description": "A fun card game clone of Exploding Kittens",
+  "start_url": "/",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "theme_color": "#10b981",
+  "background_color": "#10b981",
+  "icons": [
+    {
+      "src": "/vite.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
