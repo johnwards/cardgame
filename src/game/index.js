@@ -179,7 +179,21 @@ const ExplodingKittensGame = {
       }
 
       if (G.deck.length === 0) {
-        console.log('Deck empty, invalid move');
+        console.log('🚨 DECK EMPTY - this should not happen in Exploding Kittens!');
+        console.log('🚨 Total exploding kittens that should exist:', 3);
+        console.log('🚨 Players alive:', Object.values(G.players).filter(p => !p.isEliminated).length);
+
+        // This is an error state - log detailed info for debugging
+        console.log('🚨 Player hands:', Object.values(G.players).map(p => ({
+          id: p.id,
+          name: p.name,
+          isEliminated: p.isEliminated,
+          handSize: p.hand.length,
+          defuseCount: p.hand.filter(c => c.type === CARD_TYPES.DEFUSE).length
+        })));
+        console.log('🚨 Discard pile size:', G.discardPile.length);
+        console.log('🚨 Discard pile exploding kittens:', G.discardPile.filter(c => c.type === CARD_TYPES.EXPLODING).length);
+
         return INVALID_MOVE;
       }
 
@@ -447,15 +461,17 @@ const ExplodingKittensGame = {
       };
     }
 
-    if (G.deck.length === 0) {
-      console.log('Game over - deck exhausted');
+    if (alivePlayers.length === 0) {
+      console.log('Game over - all players eliminated');
       return {
-        winner: alivePlayers.map(p => p.id),
-        winnerName: "All remaining players",
-        reason: "Deck exhausted"
+        winner: null,
+        winnerName: "No survivors",
+        reason: "All players eliminated"
       };
     }
 
+    // Game continues as long as there are players alive and moves to be made
+    // Deck exhaustion should not end the game - players must draw exploding kittens
     return false;
   },
 
@@ -537,7 +553,12 @@ const ExplodingKittensGame = {
         }
       }
 
-      moves.push({ move: 'drawCard', args: [] });
+      // Only allow draw if deck has cards
+      if (G.deck.length > 0) {
+        moves.push({ move: 'drawCard', args: [] });
+      } else {
+        console.log('🚨 AI cannot generate drawCard move - deck is empty!');
+      }
 
       console.log('Generated', moves.length, 'possible moves for CPU', playerID);
       return moves;
