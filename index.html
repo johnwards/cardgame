@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exploding Kittens</title>
+  <!-- Link to external stylesheet - keeps HTML and CSS separated -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- ============================================
+       TOP HEADER BAR
+       Shows the game title, turn counter, and
+       which player's turn it is.
+       ============================================ -->
+  <header id="header">
+    <div>
+      💥 <strong>EXPLODING KITTENS</strong> 💥
+      <span id="turn-counter"></span>
+    </div>
+    <div>
+      <span id="current-player-name"></span>
+    </div>
+  </header>
+
+  <!-- ============================================
+       MAIN GAME LAYOUT
+       Uses a three-column layout:
+         Left   - CPU player information
+         Centre - Draw/discard piles and game events
+         Right  - Human player's hand of cards
+       ============================================ -->
+  <main id="game-layout">
+
+    <!-- ==========================================
+         LEFT SIDEBAR: CPU PLAYERS
+         Displays each CPU player's name, card
+         count, and status. Populated by JavaScript.
+         ========================================== -->
+    <aside id="cpu-sidebar">
+      <h2>🤖 CPU PLAYERS</h2>
+      <div id="cpu-players-list">
+        <!-- JS will insert a panel for each CPU player here -->
+      </div>
+    </aside>
+
+    <!-- ==========================================
+         CENTRE: GAME AREA
+         Contains the status banner for event
+         messages, the draw and discard piles,
+         and the exploding kitten placement UI.
+         ========================================== -->
+    <section id="game-area">
+
+      <!-- Status banner - displays game event messages like
+           "Player 2 played a Skip!" or "You drew an Exploding Kitten!" -->
+      <div id="status-banner"></div>
+
+      <!-- Draw and Discard piles sit side by side in the centre -->
+      <div id="piles-container">
+
+        <!-- Draw pile - players click here (or use the draw button) to draw a card -->
+        <div id="draw-pile" class="pile-card">
+          <span class="pile-emoji">🃏</span>
+          <span class="pile-label">DRAW PILE</span>
+          <span id="draw-count" class="pile-count">0</span>
+        </div>
+
+        <!-- Visual divider between the two piles -->
+        <div class="pile-divider">⚡</div>
+
+        <!-- Discard pile - shows the most recently played card -->
+        <div id="discard-pile" class="pile-card">
+          <span id="discard-emoji" class="pile-emoji">📂</span>
+          <span class="pile-label">DISCARD</span>
+          <span id="discard-count" class="pile-count">0</span>
+          <span id="discard-name" class="pile-subtext"></span>
+        </div>
+
+      </div>
+
+      <!-- Exploding Kitten placement UI
+           When a player defuses an Exploding Kitten they choose
+           where to put it back in the draw pile. Hidden until needed. -->
+      <div id="kitten-placement" class="hidden">
+        <p>Where do you want to place the Exploding Kitten?</p>
+        <div id="placement-buttons">
+          <!-- JS will create position buttons here -->
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ==========================================
+         RIGHT SIDEBAR: HUMAN PLAYER'S HAND
+         Shows the player's cards, a draw button,
+         and helpful status information.
+         ========================================== -->
+    <aside id="player-sidebar">
+
+      <!-- Player info header - hand size and alive/dead status -->
+      <div id="player-header">
+        <h2>YOUR HAND <span id="hand-count"></span></h2>
+        <span id="player-status"></span>
+      </div>
+
+      <!-- Visual indicator shown when it is the human player's turn -->
+      <div id="turn-indicator"></div>
+
+      <!-- Draw button - enabled only on the player's turn when
+           they haven't yet drawn a card -->
+      <button id="draw-button" disabled>DRAW CARD 🃏</button>
+
+      <!-- Card grid - JS renders each card in the player's hand here -->
+      <div id="player-hand"></div>
+
+      <!-- Favor banner - shown when another player asks this player
+           to give them a card via the Favor action -->
+      <div id="favor-banner" class="hidden"></div>
+
+      <!-- Help text reminds the player what they can do -->
+      <p id="help-text" class="help-text">Play cards or draw to end your turn.</p>
+
+    </aside>
+
+  </main>
+
+  <!-- ============================================
+       MODAL OVERLAY
+       A full-screen overlay used for popups such
+       as "Game Over" or card selection dialogs.
+       Hidden by default using the .hidden class.
+       ============================================ -->
+  <div id="modal-overlay" class="hidden">
+    <div id="modal-content"></div>
+  </div>
+
+  <!-- ============================================
+       JAVASCRIPT
+       Loaded as an ES module so we can use
+       import/export syntax across multiple files.
+       ============================================ -->
+  <script type="module" src="js/main.js"></script>
+
+</body>
+</html>

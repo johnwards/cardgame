@@ -1,0 +1,793 @@
+/* ============================================================
+   EXPLODING KITTENS - Card Game Stylesheet
+   ============================================================
+   A teaching project for A-Level Computer Science students.
+
+   This CSS file is organised into clear sections:
+   1. CSS Custom Properties (variables)
+   2. Reset & Base Styles
+   3. Animations (keyframes)
+   4. Layout (header, grid, sidebars)
+   5. Header Bar
+   6. Left Sidebar (CPU Players)
+   7. Center Game Area (draw pile, discard, status)
+   8. Right Sidebar (Player Hand & Cards)
+   9. Modals & Overlays
+   10. Utility Classes
+   ============================================================ */
+
+
+/* ============================================================
+   1. CSS CUSTOM PROPERTIES
+   ============================================================
+   Variables let us reuse colours and values throughout the file.
+   Change a variable here and it updates everywhere it's used.
+   ============================================================ */
+:root {
+    --color-primary: #3b82f6;    /* Blue  - buttons, links          */
+    --color-success: #22c55e;    /* Green - alive, playable          */
+    --color-danger: #ef4444;     /* Red   - eliminated, exploding    */
+    --color-warning: #f97316;    /* Orange - cat pairs, warnings     */
+    --color-purple: #8b5cf6;     /* Purple - favor, special actions  */
+    --color-bg-start: #34d399;   /* Emerald - gradient start         */
+    --color-bg-end: #22d3ee;     /* Cyan    - gradient end           */
+}
+
+
+/* ============================================================
+   2. RESET & BASE STYLES
+   ============================================================
+   A minimal reset removes default browser spacing and sets
+   a consistent box-sizing model across all elements.
+   ============================================================ */
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    /* Fill the entire viewport with no scrolling */
+    height: 100vh;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+        Oxygen, Ubuntu, Cantarell, sans-serif;
+    /* Diagonal gradient background from emerald to cyan */
+    background: linear-gradient(135deg, var(--color-bg-start), var(--color-bg-end));
+    color: #1e293b;
+}
+
+
+/* ============================================================
+   3. ANIMATIONS (KEYFRAMES)
+   ============================================================
+   @keyframes define reusable animations we can apply with
+   the 'animation' property on any element.
+   ============================================================ */
+
+/* Gentle scale pulse - used for active players, turn indicators */
+@keyframes pulse {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Vertical bounce - used for "THINKING..." text */
+@keyframes bounce {
+    0%   { transform: translateY(0); }
+    50%  { transform: translateY(-5px); }
+    100% { transform: translateY(0); }
+}
+
+/* Fade in from transparent - used for modals and status banners */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* Slide up while fading in - used for modal appearance */
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+
+/* ============================================================
+   4. LAYOUT - MAIN GRID
+   ============================================================
+   The game uses a three-column CSS Grid layout:
+   - Left sidebar  (~250px) for CPU players
+   - Center area   (flexible) for the game board
+   - Right sidebar (~300px) for the human player's hand
+   ============================================================ */
+/* Body uses a flex column: header on top, game grid below */
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+/* The three-column grid fills the remaining space below the header */
+#game-layout {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 250px 1fr 300px; /* left, center, right */
+    min-height: 0;                          /* Prevent grid blowout */
+}
+
+
+/* ============================================================
+   5. HEADER BAR
+   ============================================================
+   A frosted-glass header bar spans the full width of the grid.
+   backdrop-filter: blur() creates the frosted glass effect.
+   ============================================================ */
+#header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 24px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);  /* Safari support */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Game title text */
+#header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #ffffff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Turn counter badge - small pill shape */
+.turn-counter {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 14px;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 9999px;         /* Fully rounded pill */
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+/* Current player indicator with animation */
+.current-player-indicator {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #ffffff;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+
+/* ============================================================
+   6. LEFT SIDEBAR - CPU PLAYERS
+   ============================================================
+   Shows each CPU player as a card with their status.
+   Semi-transparent background with a frosted glass effect.
+   ============================================================ */
+#cpu-sidebar {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 16px;
+    overflow-y: auto;              /* Scroll if many CPU players */
+    border-right: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+#cpu-sidebar h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Individual CPU player card */
+.cpu-player-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 10px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Active player highlight - yellow tinted with pulse */
+.cpu-player-card.active {
+    background: #fef9c3;          /* Light yellow tint */
+    box-shadow: 0 0 12px rgba(250, 204, 21, 0.4);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+/* Eliminated player - red tint, dimmed */
+.cpu-player-card.eliminated {
+    background: #fee2e2;          /* Light red tint */
+    opacity: 0.6;
+}
+
+/* Player name row */
+.cpu-player-card .player-name {
+    font-weight: 700;
+    font-size: 0.95rem;
+    margin-bottom: 4px;
+}
+
+/* Card count and status row */
+.cpu-player-card .player-info {
+    font-size: 0.8rem;
+    color: #64748b;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* "THINKING..." bounce animation text */
+.thinking-text {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--color-warning);
+    animation: bounce 1s ease-in-out infinite;
+    margin-top: 6px;
+}
+
+/* Status badges: ALIVE (green) and ELIMINATED (red) */
+.status-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.status-badge.alive {
+    background: #dcfce7;
+    color: #16a34a;
+}
+
+.status-badge.eliminated {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+
+/* ============================================================
+   7. CENTER GAME AREA
+   ============================================================
+   The main game board: status banner, draw/discard piles,
+   and the kitten placement bar.
+   ============================================================ */
+#game-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+/* --- Status Banner --- */
+/* A coloured bar at the top of the center area showing game events */
+.status-banner {
+    width: 100%;
+    padding: 12px 20px;
+    border-radius: 10px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 1rem;
+    color: #ffffff;
+    margin-bottom: 20px;
+    animation: fadeIn 0.3s ease;
+}
+
+/* Banner colour variants based on event type */
+.status-banner.neutral {
+    background: rgba(255, 255, 255, 0.25);
+    color: #1e293b;
+}
+
+.status-banner.defuse {
+    background: linear-gradient(135deg, #f97316, #facc15);
+    animation: fadeIn 0.3s ease, pulse 2s ease-in-out infinite;
+}
+
+.status-banner.favor {
+    background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+}
+
+.status-banner.elimination {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    animation: fadeIn 0.3s ease, bounce 1s ease-in-out infinite;
+}
+
+/* --- Draw & Discard Piles --- */
+/* Two card-like boxes displayed side by side */
+#piles-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.pile-card {
+    width: 140px;
+    height: 180px;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: transform 0.2s ease;
+    cursor: default;
+}
+
+.pile-card:hover {
+    transform: scale(1.03);
+}
+
+/* Large emoji on the pile card */
+.pile-card .pile-emoji {
+    font-size: 2.5rem;
+}
+
+/* Label text (e.g., "Draw Pile", "Discard") */
+.pile-card .pile-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Card count number */
+.pile-card .pile-count {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+/* Lightning bolt divider between the two piles */
+.pile-divider {
+    font-size: 2rem;
+    color: rgba(255, 255, 255, 0.7);
+    user-select: none;             /* Prevent accidental selection */
+}
+
+/* --- Kitten Placement Bar --- */
+/* Shown when a player must place an Exploding Kitten back in the deck */
+.kitten-placement-bar {
+    width: 100%;
+    max-width: 480px;
+    background: linear-gradient(135deg, var(--color-danger), var(--color-warning));
+    border-radius: 12px;
+    padding: 16px 20px;
+    text-align: center;
+    color: #ffffff;
+    margin-bottom: 16px;
+    animation: slideUp 0.3s ease;
+}
+
+.kitten-placement-bar p {
+    font-weight: 700;
+    margin-bottom: 12px;
+    font-size: 0.95rem;
+}
+
+.kitten-placement-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.kitten-placement-buttons button {
+    background: #ffffff;
+    color: var(--color-danger);
+    border: none;
+    border-radius: 8px;
+    padding: 8px 18px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.kitten-placement-buttons button:hover {
+    transform: scale(1.08);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+
+/* ============================================================
+   8. RIGHT SIDEBAR - PLAYER HAND
+   ============================================================
+   Shows the human player's cards, draw button, and turn status.
+   ============================================================ */
+#player-sidebar {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 16px;
+    overflow-y: auto;              /* Scroll if many cards */
+    border-left: 1px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Player header with card count */
+.player-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.player-header h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #ffffff;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.card-count {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* --- Turn Indicator Pills --- */
+.turn-indicator {
+    display: inline-block;
+    padding: 6px 16px;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.turn-indicator.your-turn {
+    background: var(--color-success);
+    color: #ffffff;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.turn-indicator.waiting {
+    background: #94a3b8;
+    color: #ffffff;
+}
+
+/* --- Draw Button --- */
+.draw-button {
+    width: 100%;
+    padding: 12px;
+    background: var(--color-primary);
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.draw-button:hover:not(:disabled) {
+    transform: scale(1.02);
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+}
+
+/* Disabled state - grey and non-interactive */
+.draw-button:disabled {
+    background: #94a3b8;
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* --- Cards Grid --- */
+/* Two-column grid layout for the player's hand cards */
+.cards-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;  /* Two equal columns */
+    gap: 10px;
+}
+
+/* --- Individual Card Tile --- */
+.card-tile {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+    border: 2px solid #e2e8f0;      /* Default light grey border */
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Large emoji on the card */
+.card-tile .card-emoji {
+    font-size: 2rem;
+}
+
+/* Card name text */
+.card-tile .card-name {
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: #1e293b;
+}
+
+/* Card type label (e.g., "Attack", "Skip") */
+.card-tile .card-type {
+    font-size: 0.7rem;
+    color: #64748b;
+}
+
+/* Action label at the bottom (e.g., "Play", "Choose target") */
+.card-tile .card-action {
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-top: 4px;
+}
+
+/* --- Card State Variants --- */
+
+/* Playable cards - green border, interactive */
+.card-tile.playable {
+    border-color: var(--color-success);
+    cursor: pointer;
+}
+
+.card-tile.playable:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 16px rgba(34, 197, 94, 0.3);
+}
+
+/* Cat pair available - orange border with "PAIR!" label */
+.card-tile.cat-pair {
+    border-color: var(--color-warning);
+    cursor: pointer;
+}
+
+.card-tile.cat-pair:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 16px rgba(249, 115, 22, 0.3);
+}
+
+.card-tile.cat-pair .card-action {
+    color: var(--color-warning);
+}
+
+/* Exploding Kitten card - red border, "DANGER!" label */
+.card-tile.exploding-kitten {
+    border-color: var(--color-danger);
+}
+
+.card-tile.exploding-kitten .card-action {
+    color: var(--color-danger);
+}
+
+/* Defuse card - green border, "SAFETY" label */
+.card-tile.defuse {
+    border-color: var(--color-success);
+}
+
+.card-tile.defuse .card-action {
+    color: var(--color-success);
+}
+
+/* Non-playable cards - grey, dimmed, not interactive */
+.card-tile.non-playable {
+    border-color: #cbd5e1;
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* --- Favor Give Mode --- */
+/* When the player must choose a card to give during a Favor action */
+.favor-instruction {
+    width: 100%;
+    padding: 10px 16px;
+    background: var(--color-purple);
+    color: #ffffff;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+    animation: fadeIn 0.3s ease;
+}
+
+/* In favor mode, cards get purple hover borders */
+.favor-mode .card-tile:hover {
+    border-color: var(--color-purple);
+    box-shadow: 0 4px 16px rgba(139, 92, 246, 0.3);
+}
+
+
+/* ============================================================
+   9. MODALS & OVERLAYS
+   ============================================================
+   Modals appear on top of the game for important interactions
+   (game over, attack choices, target selection, etc.).
+   ============================================================ */
+
+/* Dark overlay behind the modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
+}
+
+/* Modal content box */
+.modal-content {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+    padding: 28px;
+    max-width: 500px;
+    width: 90%;
+    animation: slideUp 0.3s ease;
+}
+
+.modal-content h2 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+.modal-content p {
+    font-size: 0.95rem;
+    color: #475569;
+    margin-bottom: 16px;
+    line-height: 1.5;
+}
+
+/* Game Over modal - gradient background instead of white */
+.modal-content.game-over {
+    background: linear-gradient(135deg, var(--color-purple), #ec4899);
+    color: #ffffff;
+}
+
+.modal-content.game-over h2,
+.modal-content.game-over p {
+    color: #ffffff;
+}
+
+/* Attack modal - red/orange/yellow gradient */
+.modal-content.attack {
+    background: linear-gradient(135deg, var(--color-danger), var(--color-warning), #facc15);
+    color: #ffffff;
+}
+
+.modal-content.attack h2,
+.modal-content.attack p {
+    color: #ffffff;
+}
+
+/* --- Modal Buttons --- */
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 16px;
+}
+
+.modal-button {
+    padding: 10px 22px;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.modal-button:hover {
+    transform: scale(1.03);
+}
+
+/* Primary action button (blue) */
+.modal-button.primary {
+    background: var(--color-primary);
+    color: #ffffff;
+}
+
+.modal-button.primary:hover {
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+}
+
+/* Secondary action button (grey) */
+.modal-button.secondary {
+    background: #e2e8f0;
+    color: #475569;
+}
+
+.modal-button.secondary:hover {
+    background: #cbd5e1;
+}
+
+/* --- Modal Player/Card List --- */
+/* Used for target selection and similar modal lists */
+.modal-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.modal-list-item {
+    padding: 10px 16px;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.15s ease;
+}
+
+.modal-list-item:hover {
+    background: rgba(59, 130, 246, 0.15);
+}
+
+
+/* ============================================================
+   10. UTILITY CLASSES
+   ============================================================
+   Small helper classes for common patterns.
+   ============================================================ */
+
+/* Hide an element completely */
+.hidden {
+    display: none;
+}
+
+/* Colour helpers for status text */
+.text-success {
+    color: var(--color-success);
+}
+
+.text-danger {
+    color: var(--color-danger);
+}
+
+.text-warning {
+    color: var(--color-warning);
+}
+
+.text-purple {
+    color: var(--color-purple);
+}
+
+.text-primary {
+    color: var(--color-primary);
+}
+
+.text-white {
+    color: #ffffff;
+}
