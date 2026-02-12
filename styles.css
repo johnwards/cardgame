@@ -140,6 +140,13 @@ body {
     border-bottom: 1px solid rgba(255, 255, 255, 0.3);
 }
 
+/* Header child divs sit items in a row */
+#header > div {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
 /* Game title text */
 #header h1 {
     font-size: 1.5rem;
@@ -274,6 +281,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     padding: 20px;
     overflow-y: auto;
 }
@@ -362,6 +370,13 @@ body {
     color: #1e293b;
 }
 
+/* Name of the top card on the discard pile */
+.pile-subtext {
+    font-size: 0.7rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
 /* Lightning bolt divider between the two piles */
 .pile-divider {
     font-size: 2rem;
@@ -431,13 +446,13 @@ body {
 }
 
 /* Player header with card count */
-.player-header {
+#player-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-.player-header h2 {
+#player-header h2 {
     font-size: 1rem;
     font-weight: 700;
     color: #ffffff;
@@ -765,6 +780,14 @@ body {
 /* Hide an element completely */
 .hidden {
     display: none;
+}
+
+/* Help text at the bottom of the player sidebar */
+.help-text {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.7);
+    text-align: center;
+    margin-top: auto;  /* Push to bottom of flex container */
 }
 
 /* Colour helpers for status text */
