@@ -140,16 +140,15 @@ function renderCPUPlayers(state) {
 
     card.appendChild(infoDiv);
 
-    // Show "THINKING..." text when it's this CPU's turn
-    if (state.currentPlayer === i && !player.isEliminated) {
-      const thinking = createElement('div', 'thinking-text', 'THINKING...');
-      card.appendChild(thinking);
-    }
-
-    // Show "PLACING KITTEN..." when this CPU is placing an exploding kitten
+    // Show action text when this CPU is active
     if (state.pendingPlayer === i && state.pendingExplodingKitten) {
+      // CPU is deciding where to place a defused Exploding Kitten
       const placing = createElement('div', 'thinking-text', 'PLACING KITTEN...');
       card.appendChild(placing);
+    } else if (state.currentPlayer === i && !player.isEliminated) {
+      // CPU is thinking about their next move
+      const thinking = createElement('div', 'thinking-text', 'THINKING...');
+      card.appendChild(thinking);
     }
 
     list.appendChild(card);
