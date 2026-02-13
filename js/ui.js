@@ -62,7 +62,7 @@ function renderGame(state, callbacks) {
   renderCPUPlayers(state);
   renderStatusBanner(state);
   renderPiles(state);
-  renderViltrumitePlacement(state, callbacks);
+  renderViltrumiteAttackPlacement(state, callbacks);
   renderPlayerSidebar(state, callbacks);
   renderModals(state, callbacks);
 }
@@ -123,7 +123,7 @@ function renderCPUPlayers(state) {
     // Info row: card count + status badge
     const infoDiv = createElement('div', 'player-info');
 
-    const cardCount = createElement('span', '', `🃏 ${player.hand.length} cards`);
+    const cardCount = createElement('span', '', `\u{1F0CF} ${player.hand.length} cards`);
     infoDiv.appendChild(cardCount);
 
     // Status badge (ALIVE or ELIMINATED)
@@ -140,9 +140,9 @@ function renderCPUPlayers(state) {
     card.appendChild(infoDiv);
 
     // Show action text when this CPU is active
-    if (state.pendingPlayer === i && state.pendingExplodingViltrumite) {
-      // CPU is deciding where to place a defused Exploding Viltrumite
-      const placing = createElement('div', 'thinking-text', 'PLACING VILTRUMITE...');
+    if (state.pendingPlayer === i && state.pendingViltrumiteAttack) {
+      // CPU is deciding where to place a countered Viltrumite Attack
+      const placing = createElement('div', 'thinking-text', 'PLACING VILTRUMITE ATTACK...');
       card.appendChild(placing);
     } else if (state.currentPlayer === i && !player.isEliminated) {
       // CPU is thinking about their next move
@@ -165,18 +165,18 @@ function renderStatusBanner(state) {
 
   const humanPlayer = state.players[0];
 
-  // Priority 1: Human is placing a defused Exploding Viltrumite
-  if (state.pendingExplodingViltrumite && state.pendingPlayer === 0) {
-    banner.className = 'status-banner defuse';
-    banner.textContent = 'You defused it! Choose where to place the Exploding Viltrumite...';
+  // Priority 1: Human is placing a countered Viltrumite Attack
+  if (state.pendingViltrumiteAttack && state.pendingPlayer === 0) {
+    banner.className = 'status-banner hero-assist';
+    banner.textContent = 'You countered it! Choose where to place the Viltrumite Attack...';
     return;
   }
 
-  // Priority 2: A CPU is placing a defused Exploding Viltrumite
-  if (state.pendingExplodingViltrumite && state.pendingPlayer !== null && state.pendingPlayer !== 0) {
+  // Priority 2: A CPU is placing a countered Viltrumite Attack
+  if (state.pendingViltrumiteAttack && state.pendingPlayer !== null && state.pendingPlayer !== 0) {
     const cpuName = state.players[state.pendingPlayer].name;
-    banner.className = 'status-banner defuse';
-    banner.textContent = `${cpuName} defused it! They're placing the viltrumite...`;
+    banner.className = 'status-banner hero-assist';
+    banner.textContent = `${cpuName} countered it! They're placing the Viltrumite Attack...`;
     return;
   }
 
@@ -243,34 +243,34 @@ function renderPiles(state) {
 }
 
 // ============================================================================
-// 5. VILTRUMITE PLACEMENT - Buttons for placing a defused Exploding Viltrumite
+// 5. VILTRUMITE ATTACK PLACEMENT - Buttons for placing a countered Viltrumite Attack
 // ============================================================================
 
-function renderViltrumitePlacement(state, callbacks) {
-  const placement = document.getElementById('viltrumite-placement');
+function renderViltrumiteAttackPlacement(state, callbacks) {
+  const placement = document.getElementById('viltrumite-attack-placement');
   const buttons = document.getElementById('placement-buttons');
 
-  // Only show when the human player needs to place an Exploding Viltrumite
-  if (state.pendingExplodingViltrumite && state.pendingPlayer === 0) {
+  // Only show when the human player needs to place a Viltrumite Attack
+  if (state.pendingViltrumiteAttack && state.pendingPlayer === 0) {
     placement.classList.remove('hidden');
-    placement.className = 'viltrumite-placement-bar';
+    placement.className = 'viltrumite-attack-placement-bar';
     clearElement(buttons);
-    buttons.className = 'viltrumite-placement-buttons';
+    buttons.className = 'viltrumite-attack-placement-buttons';
 
     // Top position - the next player draws it immediately (evil move!)
     const topBtn = createElement('button', '', '\u{1F51D} TOP (EVIL!)');
-    topBtn.addEventListener('click', () => callbacks.onPlaceViltrumite(0));
+    topBtn.addEventListener('click', () => callbacks.onPlaceViltrumiteAttack(0));
     buttons.appendChild(topBtn);
 
     // Middle position - somewhere in the middle of the deck
     const midPosition = Math.floor(state.deck.length / 2);
     const midBtn = createElement('button', '', '\u{2195}\u{FE0F} MIDDLE');
-    midBtn.addEventListener('click', () => callbacks.onPlaceViltrumite(midPosition));
+    midBtn.addEventListener('click', () => callbacks.onPlaceViltrumiteAttack(midPosition));
     buttons.appendChild(midBtn);
 
     // Bottom position - safe, drawn last
     const bottomBtn = createElement('button', '', '\u{2B07}\u{FE0F} BOTTOM (SAFE)');
-    bottomBtn.addEventListener('click', () => callbacks.onPlaceViltrumite(state.deck.length));
+    bottomBtn.addEventListener('click', () => callbacks.onPlaceViltrumiteAttack(state.deck.length));
     buttons.appendChild(bottomBtn);
   } else {
     placement.className = 'hidden';
@@ -316,7 +316,7 @@ function renderPlayerSidebar(state, callbacks) {
 
   // Determine if there are any pending actions blocking the draw
   const hasPendingAction =
-    (state.pendingExplodingViltrumite && state.pendingPlayer === 0) ||
+    (state.pendingViltrumiteAttack && state.pendingPlayer === 0) ||
     state.seeTheFutureCards !== null ||
     (state.favorTarget === 0 && state.pendingFavor !== null);
 
@@ -365,7 +365,7 @@ function renderPlayerHand(state, callbacks) {
 
   // Determine if there are pending actions blocking normal play
   const hasPendingAction =
-    (state.pendingExplodingViltrumite && state.pendingPlayer === 0) ||
+    (state.pendingViltrumiteAttack && state.pendingPlayer === 0) ||
     state.seeTheFutureCards !== null ||
     (state.favorTarget === 0 && state.pendingFavor !== null);
 
@@ -375,11 +375,11 @@ function renderPlayerHand(state, callbacks) {
     !state.gameover &&
     !hasPendingAction;
 
-  // Count how many of each cat card the human has (for pair detection)
-  const catCounts = {};
+  // Count how many of each basic card the human has (for pair detection)
+  const basicCounts = {};
   humanPlayer.hand.forEach(card => {
-    if (card.type === 'cat') {
-      catCounts[card.name] = (catCounts[card.name] || 0) + 1;
+    if (card.type === 'basic') {
+      basicCounts[card.name] = (basicCounts[card.name] || 0) + 1;
     }
   });
 
@@ -411,13 +411,13 @@ function renderPlayerHand(state, callbacks) {
     } else if (isHumanTurn) {
       // --- Normal play mode: depends on card type ---
       switch (card.type) {
-        case 'exploding':
-          tile.classList.add('non-playable', 'exploding-viltrumite');
+        case 'viltrumite_attack':
+          tile.classList.add('non-playable', 'viltrumite-attack');
           actionText = 'DANGER!';
           break;
 
-        case 'defuse':
-          tile.classList.add('non-playable', 'defuse');
+        case 'hero_assist':
+          tile.classList.add('non-playable', 'hero-assist');
           actionText = 'SAFETY';
           break;
 
@@ -451,12 +451,12 @@ function renderPlayerHand(state, callbacks) {
           tile.addEventListener('click', () => callbacks.onPlayCard(cardIndex));
           break;
 
-        case 'cat':
-          // Cat cards need a matching pair to be useful
-          if (catCounts[card.name] >= 2) {
-            tile.classList.add('cat-pair', 'playable');
+        case 'basic':
+          // Basic cards need a matching pair to be useful
+          if (basicCounts[card.name] >= 2) {
+            tile.classList.add('basic-pair', 'playable');
             actionText = 'Play pair';
-            // Add a "PAIR!" label (styled via .cat-pair .card-action in CSS)
+            // Add a "PAIR!" label (styled via .basic-pair .card-action in CSS)
             const pairLabel = createElement('span', 'card-action', 'PAIR!');
             tile.appendChild(pairLabel);
             tile.addEventListener('click', () => callbacks.onPlayCard(cardIndex));
@@ -515,8 +515,8 @@ function renderHelpText(state) {
   } else if (state.favorTarget === 0 && state.pendingFavor !== null) {
     const requesterName = state.players[state.pendingFavor].name;
     helpText.textContent = `You must give a card to ${requesterName}.`;
-  } else if (state.pendingExplodingViltrumite && state.pendingPlayer === 0) {
-    helpText.textContent = 'Choose where to place the Exploding Viltrumite in the deck.';
+  } else if (state.pendingViltrumiteAttack && state.pendingPlayer === 0) {
+    helpText.textContent = 'Choose where to place the Viltrumite Attack in the deck.';
   } else if (state.seeTheFutureCards) {
     helpText.textContent = 'Viewing the top 3 cards of the deck...';
   } else if (state.currentPlayer === 0) {
@@ -634,11 +634,11 @@ function renderModals(state, callbacks) {
     state.seeTheFutureCards.forEach((card, index) => {
       let itemClasses = 'modal-list-item';
 
-      // Highlight exploding viltrumites in red, defuse in green
-      if (card.type === 'exploding') {
-        itemClasses += ' stf-exploding';
-      } else if (card.type === 'defuse') {
-        itemClasses += ' stf-defuse';
+      // Highlight Viltrumite Attacks in red, Hero Assist in green
+      if (card.type === 'viltrumite_attack') {
+        itemClasses += ' stf-viltrumite-attack';
+      } else if (card.type === 'hero_assist') {
+        itemClasses += ' stf-hero-assist';
       }
 
       const item = createElement('div', itemClasses);
@@ -671,7 +671,7 @@ function renderModals(state, callbacks) {
 // showTargetSelectionModal(state, title, emoji, onSelect, onCancel)
 // ============================================================================
 // Displays a modal listing alive players that can be targeted.
-// Used for Favor and Cat Pair actions where the human must pick a target.
+// Used for Favor and Basic Pair actions where the human must pick a target.
 
 function showTargetSelectionModal(state, title, emoji, onSelect, onCancel) {
   const overlay = document.getElementById('modal-overlay');
@@ -717,13 +717,13 @@ function showTargetSelectionModal(state, title, emoji, onSelect, onCancel) {
 }
 
 // ============================================================================
-// showCatPairStealModal(state, targetId, onSelect, onCancel)
+// showBasicPairStealModal(state, targetId, onSelect, onCancel)
 // ============================================================================
 // Shows face-down card backs for the target player's hand. The human clicks
 // one to "steal" it. The actual stolen card is random (handled by game logic),
 // so this is purely visual - it just adds drama and fun!
 
-function showCatPairStealModal(state, targetId, onSelect, onCancel) {
+function showBasicPairStealModal(state, targetId, onSelect, onCancel) {
   const overlay = document.getElementById('modal-overlay');
   const content = document.getElementById('modal-content');
   const target = state.players[targetId];
@@ -778,5 +778,5 @@ function showCatPairStealModal(state, targetId, onSelect, onCancel) {
 export {
   renderGame,
   showTargetSelectionModal,
-  showCatPairStealModal
+  showBasicPairStealModal
 };

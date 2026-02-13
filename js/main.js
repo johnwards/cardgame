@@ -5,7 +5,7 @@
  * This file follows the pseudocode state-machine pattern:
  *
  *   GLOBAL Game
- *     ATTRIBUTE state            ← which screen we're on
+ *     ATTRIBUTE state            <- which screen we're on
  *     ATTRIBUTE players
  *     ATTRIBUTE currentPlayerIndex
  *     ATTRIBUTE deck
@@ -13,9 +13,9 @@
  *     ATTRIBUTE attackActive
  *     ATTRIBUTE attackTimer
  *
- *     METHOD Constructor()       ← set state to "MAIN_MENU"
- *     METHOD ChangeState(s)      ← switch to a new state
- *     METHOD Update()            ← call the right update for the current state
+ *     METHOD Constructor()       <- set state to "MAIN_MENU"
+ *     METHOD ChangeState(s)      <- switch to a new state
+ *     METHOD Update()            <- call the right update for the current state
  *   END GLOBAL
  * =====================================================================
  *
@@ -33,15 +33,15 @@ import {
   resolveFavor,
   playShuffle,
   playSeeTheFuture,
-  playCatPair,
-  playSingleCat,
-  placeExplodingViltrumite,
+  playBasicPair,
+  playSingleBasic,
+  placeViltrumiteAttack,
   getValidTargets
 } from './game.js';
 
 import { executeCPUTurn } from './cpu.js';
 
-import { renderGame, showTargetSelectionModal, showCatPairStealModal } from './ui.js';
+import { renderGame, showTargetSelectionModal, showBasicPairStealModal } from './ui.js';
 
 
 // ==========================================================================
@@ -64,7 +64,7 @@ class Game {
 
 
   // -----------------------------------------------------------------------
-  // METHOD Constructor()  –  pseudocode lines 10-15
+  // METHOD Constructor()  -  pseudocode lines 10-15
   // -----------------------------------------------------------------------
   // Set the initial state and prepare empty attributes.
   // The real card data is created later when the player clicks PLAY.
@@ -79,7 +79,7 @@ class Game {
 
 
   // -----------------------------------------------------------------------
-  // METHOD ChangeState(newState)  –  pseudocode lines 17-19
+  // METHOD ChangeState(newState)  -  pseudocode lines 17-19
   // -----------------------------------------------------------------------
   changeState(newState) {
     this.state = newState;
@@ -88,7 +88,7 @@ class Game {
 
 
   // -----------------------------------------------------------------------
-  // METHOD Update()  –  pseudocode lines 21-33
+  // METHOD Update()  -  pseudocode lines 21-33
   // -----------------------------------------------------------------------
   // This is the main state-machine switch.  It checks which state we are
   // in and calls the matching handler - exactly like the IF / ELSE IF
@@ -114,7 +114,7 @@ class Game {
 
 
   // =====================================================================
-  //  State handlers  –  one method per state
+  //  State handlers  -  one method per state
   // =====================================================================
 
   // --- MAIN_MENU ----------------------------------------------------------
@@ -175,7 +175,7 @@ class Game {
 
 
   // =====================================================================
-  //  Rendering & CPU turns  –  helper methods used during GAMEPLAY
+  //  Rendering & CPU turns  -  helper methods used during GAMEPLAY
   // =====================================================================
 
   render() {
@@ -199,16 +199,16 @@ class Game {
 
 
 // ==========================================================================
-// Create the single Game instance  –  pseudocode "GLOBAL Game"
+// Create the single Game instance  -  pseudocode "GLOBAL Game"
 // ==========================================================================
 const game = new Game();
 
 
 // ==========================================================================
-// CALLBACKS  –  connect UI actions to game logic
+// CALLBACKS  -  connect UI actions to game logic
 // ==========================================================================
 // The callbacks object is passed to renderGame(). When the player clicks
-// a card, draws, places a viltrumite, etc., the UI calls the matching callback.
+// a card, draws, places a Viltrumite Attack, etc., the UI calls the matching callback.
 // ==========================================================================
 
 const callbacks = {
@@ -257,12 +257,12 @@ const callbacks = {
         );
         break;
 
-      case 'cat': {
-        const matchingCats = state.players[0].hand.filter(
-          c => c.type === 'cat' && c.name === card.name
+      case 'basic': {
+        const matchingBasics = state.players[0].hand.filter(
+          c => c.type === 'basic' && c.name === card.name
         );
 
-        if (matchingCats.length >= 2) {
+        if (matchingBasics.length >= 2) {
           const validTargets = getValidTargets(state, 0);
           if (validTargets.length === 0) { game.render(); return; }
 
@@ -271,17 +271,17 @@ const callbacks = {
             `Play ${card.name} Pair`,
             card.emoji,
             (targetId) => {
-              showCatPairStealModal(
+              showBasicPairStealModal(
                 state,
                 targetId,
-                () => { playCatPair(state, 0, card.name, targetId); game.render(); },
+                () => { playBasicPair(state, 0, card.name, targetId); game.render(); },
                 () => { game.render(); }
               );
             },
             () => { game.render(); }
           );
         } else {
-          playSingleCat(state, 0, cardIndex);
+          playSingleBasic(state, 0, cardIndex);
           game.render();
         }
         break;
@@ -301,9 +301,9 @@ const callbacks = {
     }
   },
 
-  onPlaceViltrumite(position) {
+  onPlaceViltrumiteAttack(position) {
     const state = game._gameData;
-    const result = placeExplodingViltrumite(state, position);
+    const result = placeViltrumiteAttack(state, position);
     game.render();
 
     if (!result.continueTurn) {
@@ -329,7 +329,7 @@ const callbacks = {
     }
   },
 
-  // "New Game" from the game-over modal → return to MAIN_MENU
+  // "New Game" from the game-over modal -> return to MAIN_MENU
   onNewGame() {
     game.changeState("MAIN_MENU");
   },
@@ -343,8 +343,8 @@ const callbacks = {
 // ==========================================================================
 // Wire up start-screen buttons
 // ==========================================================================
-// PLAY   → changeState("GAMEPLAY")  → creates cards & shows game
-// SETTINGS / EXIT → placeholders for now
+// PLAY   -> changeState("GAMEPLAY")  -> creates cards & shows game
+// SETTINGS / EXIT -> placeholders for now
 // ==========================================================================
 
 document.getElementById('play-btn').addEventListener('click', () => {

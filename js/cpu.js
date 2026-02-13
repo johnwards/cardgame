@@ -6,13 +6,13 @@
  * no strategy here, just random selection from all valid options.
  *
  * A more advanced AI could weigh moves (e.g. prefer playing a Skip when
- * an Exploding Viltrumite is near the top of the deck), but random selection
+ * a Viltrumite Attack is near the top of the deck), but random selection
  * keeps the code simple and is a good baseline to build upon.
  */
 
 import {
   drawCard, playSkip, playAttack, playFavor, playShuffle,
-  playSeeTheFuture, playCatPair, playSingleCat, placeExplodingViltrumite,
+  playSeeTheFuture, playBasicPair, playSingleBasic, placeViltrumiteAttack,
   getValidTargets
 } from './game.js';
 
@@ -76,7 +76,7 @@ function wait(ms) {
  * checks the player's hand and the current game state to build a list
  * of every legal action.
  *
- * Special states (like needing to place an Exploding Viltrumite back in the
+ * Special states (like needing to place a Viltrumite Attack back in the
  * deck) are checked first, because they override normal play.
  *
  * @param {object} state - The current game state
@@ -91,15 +91,15 @@ function getLegalMoves(state, playerIndex) {
     return [{ type: 'waitForFavor' }];
   }
 
-  // --- Special state: must place an Exploding Viltrumite back in the deck ---
-  // The CPU drew an Exploding Viltrumite but had a Defuse card, so now they
-  // must choose where in the deck to place the viltrumite back.
-  if (state.pendingExplodingViltrumite && state.pendingPlayer === playerIndex) {
+  // --- Special state: must place a Viltrumite Attack back in the deck ---
+  // The CPU drew a Viltrumite Attack but had a Hero Assist card, so now they
+  // must choose where in the deck to place the Viltrumite Attack back.
+  if (state.pendingViltrumiteAttack && state.pendingPlayer === playerIndex) {
     return [
-      { type: 'placeExplodingViltrumite', position: 0 },                                    // top of deck
-      { type: 'placeExplodingViltrumite', position: Math.floor(state.deck.length / 3) },     // one-third down
-      { type: 'placeExplodingViltrumite', position: Math.floor(state.deck.length * 2 / 3) }, // two-thirds down
-      { type: 'placeExplodingViltrumite', position: state.deck.length }                      // bottom of deck
+      { type: 'placeViltrumiteAttack', position: 0 },                                    // top of deck
+      { type: 'placeViltrumiteAttack', position: Math.floor(state.deck.length / 3) },     // one-third down
+      { type: 'placeViltrumiteAttack', position: Math.floor(state.deck.length * 2 / 3) }, // two-thirds down
+      { type: 'placeViltrumiteAttack', position: state.deck.length }                      // bottom of deck
     ];
   }
 
@@ -127,26 +127,26 @@ function getLegalMoves(state, playerIndex) {
         }
         break;
 
-      // Cat cards can be played as pairs to steal a random card from someone
-      case 'cat':
-        // Count how many cats of the same name we have (need 2+ for a pair)
-        const matchCount = player.hand.filter(c => c.type === 'cat' && c.name === card.name).length;
+      // Basic cards can be played as pairs to steal a random card from someone
+      case 'basic':
+        // Count how many basic cards of the same name we have (need 2+ for a pair)
+        const matchCount = player.hand.filter(c => c.type === 'basic' && c.name === card.name).length;
         if (matchCount >= 2) {
           for (const targetId of validTargets) {
-            // Avoid duplicate moves - only add one playCatPair per cat name per target
+            // Avoid duplicate moves - only add one playBasicPair per card name per target
             const alreadyAdded = moves.some(
-              m => m.type === 'playCatPair' && m.cardName === card.name && m.targetIndex === targetId
+              m => m.type === 'playBasicPair' && m.cardName === card.name && m.targetIndex === targetId
             );
             if (!alreadyAdded) {
-              moves.push({ type: 'playCatPair', cardName: card.name, targetIndex: targetId });
+              moves.push({ type: 'playBasicPair', cardName: card.name, targetIndex: targetId });
             }
           }
         }
         break;
 
-      // Defuse and Exploding Viltrumite cards are never voluntarily played
-      // - Defuse is used automatically when you draw an Exploding Viltrumite
-      // - Exploding Viltrumite is never in a player's hand during normal play
+      // Hero Assist and Viltrumite Attack cards are never voluntarily played
+      // - Hero Assist is used automatically when you draw a Viltrumite Attack
+      // - Viltrumite Attack is never in a player's hand during normal play
     }
   }
 
@@ -197,11 +197,11 @@ function executeMove(state, playerIndex, move) {
     case 'playFavor':
       return { ...playFavor(state, playerIndex, move.cardIndex, move.targetIndex), action: 'favor' };
 
-    case 'playCatPair':
-      return { ...playCatPair(state, playerIndex, move.cardName, move.targetIndex), action: 'catPair' };
+    case 'playBasicPair':
+      return { ...playBasicPair(state, playerIndex, move.cardName, move.targetIndex), action: 'basicPair' };
 
-    case 'placeExplodingViltrumite':
-      return { ...placeExplodingViltrumite(state, move.position), action: 'placeViltrumite' };
+    case 'placeViltrumiteAttack':
+      return { ...placeViltrumiteAttack(state, move.position), action: 'placeViltrumiteAttack' };
 
     case 'waitForFavor':
       // Nothing to execute - just signal that we're waiting for the human
@@ -224,10 +224,10 @@ function executeMove(state, playerIndex, move) {
  *   - Draws a card (this always ends the action loop)
  *   - Plays an Attack card (passes turn to next player)
  *   - Plays a Skip card and has no remaining turns
- *   - Places an Exploding Viltrumite and doesn't continue
+ *   - Places a Viltrumite Attack and doesn't continue
  *
  * A turn does NOT end when the CPU plays:
- *   - Shuffle, See the Future, Favor, or Cat Pairs (these are "free" actions)
+ *   - Shuffle, See the Future, Favor, or Basic Pairs (these are "free" actions)
  *   - Skip when they still have turns remaining (from a previous Attack)
  *
  * The onStateChange callback is called after each move so the UI can
@@ -284,14 +284,14 @@ async function executeCPUTurn(state, playerIndex, onStateChange) {
     // turns (if the CPU was under an Attack). Check the result.
     if (result.action === 'skip' && result.turnEnded) break;
 
-    // After placing an Exploding Viltrumite back in the deck, check if
+    // After placing a Viltrumite Attack back in the deck, check if
     // the CPU's turn continues (it might if they had multiple turns)
-    if (result.action === 'placeViltrumite') {
+    if (result.action === 'placeViltrumiteAttack') {
       if (!result.continueTurn) break;
     }
 
     // If we reach here, the CPU played a "free" action card (Shuffle,
-    // See the Future, Favor, Cat Pair) and their turn continues.
+    // See the Future, Favor, Basic Pair) and their turn continues.
     // The while loop goes back to the top to pick another move.
   }
 }

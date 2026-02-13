@@ -72,12 +72,12 @@
          CENTRE: GAME AREA
          Contains the status banner for event
          messages, the draw and discard piles,
-         and the exploding viltrumite placement UI.
+         and the viltrumite attack placement UI.
          ========================================== -->
     <section id="game-area">
 
       <!-- Status banner - displays game event messages like
-           "Player 2 played a Skip!" or "You drew an Exploding Viltrumite!" -->
+           "Player 2 played a Skip!" or "You drew a Viltrumite Attack!" -->
       <div id="status-banner"></div>
 
       <!-- Draw and Discard piles sit side by side in the centre -->
@@ -103,11 +103,11 @@
 
       </div>
 
-      <!-- Exploding Viltrumite placement UI
-           When a player defuses an Exploding Viltrumite they choose
+      <!-- Viltrumite Attack placement UI
+           When a player counters a Viltrumite Attack they choose
            where to put it back in the draw pile. Hidden until needed. -->
-      <div id="viltrumite-placement" class="hidden">
-        <p>Where do you want to place the Exploding Viltrumite?</p>
+      <div id="viltrumite-attack-placement" class="hidden">
+        <p>Where do you want to place the Viltrumite Attack?</p>
         <div id="placement-buttons">
           <!-- JS will create position buttons here -->
         </div>

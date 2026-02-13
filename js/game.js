@@ -16,21 +16,21 @@
  * element.
  */
 
-import { CARD_TYPES, CAT_TYPES, createCard, createDeck, shuffleDeck } from './cards.js';
+import { CARD_TYPES, BASIC_TYPES, createCard, createDeck, shuffleDeck } from './cards.js';
 
 // ---------------------------------------------------------------------------
 // createGameState() - set up a brand new game
 // ---------------------------------------------------------------------------
 // The setup follows the official Exploding Viltrumites rules:
 //   1. Build the full 50-card deck
-//   2. Remove all Exploding Viltrumites and Defuse cards
-//   3. Shuffle the remaining action/cat cards
-//   4. Deal each player 1 Defuse + 7 action/cat cards = 8 cards each
-//   5. Put leftover Defuse cards and Exploding Viltrumites back into the deck
+//   2. Remove all Viltrumite Attacks and Hero Assist cards
+//   3. Shuffle the remaining action/basic cards
+//   4. Deal each player 1 Hero Assist + 7 action/basic cards = 8 cards each
+//   5. Put leftover Hero Assist cards and Viltrumite Attacks back into the deck
 //   6. Shuffle the final draw deck
 //
-// This ensures every player starts with a Defuse card (their first line
-// of defence) and the Exploding Viltrumites are only in the draw pile, never
+// This ensures every player starts with a Hero Assist card (their first line
+// of defence) and the Viltrumite Attacks are only in the draw pile, never
 // dealt directly to a player's starting hand.
 
 function createGameState() {
@@ -38,23 +38,23 @@ function createGameState() {
   const allCards = createDeck();
 
   // Step 2: Separate out special cards we don't want dealt to players
-  const explodingViltrumites = allCards.filter(card => card.type === 'exploding');
-  const defuseCards = allCards.filter(card => card.type === 'defuse');
-  const actionCards = allCards.filter(card => card.type !== 'exploding' && card.type !== 'defuse');
+  const viltrumiteAttackCards = allCards.filter(card => card.type === 'viltrumite_attack');
+  const heroAssistCards = allCards.filter(card => card.type === 'hero_assist');
+  const actionCards = allCards.filter(card => card.type !== 'viltrumite_attack' && card.type !== 'hero_assist');
 
-  // Step 3: Shuffle the action/cat cards before dealing
+  // Step 3: Shuffle the action/basic cards before dealing
   shuffleDeck(actionCards);
 
   // Step 4: Create the four players and deal their starting hands
-  // Each player gets 1 Defuse card + 7 action/cat cards = 8 cards
+  // Each player gets 1 Hero Assist card + 7 action/basic cards = 8 cards
   const players = {};
   const playerNames = ['You', 'CPU 1', 'CPU 2', 'CPU 3'];
 
   for (let i = 0; i < 4; i++) {
-    // Give one Defuse card from our separated pile
-    const hand = [defuseCards[i]];
+    // Give one Hero Assist card from our separated pile
+    const hand = [heroAssistCards[i]];
 
-    // Deal 7 action/cat cards from the shuffled pile
+    // Deal 7 action/basic cards from the shuffled pile
     // splice(0, 7) removes the first 7 cards and returns them
     hand.push(...actionCards.splice(0, 7));
 
@@ -68,15 +68,15 @@ function createGameState() {
   }
 
   // Step 5: Build the draw deck from what's left
-  // Remaining: 2 Defuse cards (6 total - 4 dealt) + 3 Exploding Viltrumites
-  //          + 13 leftover action/cat cards = 18 cards
+  // Remaining: 2 Hero Assist cards (6 total - 4 dealt) + 3 Viltrumite Attacks
+  //          + 13 leftover action/basic cards = 18 cards
   const deck = [
-    ...defuseCards.slice(4),   // The 2 undealt Defuse cards
-    ...explodingViltrumites,        // All 3 Exploding Viltrumites
-    ...actionCards              // The 13 remaining action/cat cards
+    ...heroAssistCards.slice(4),   // The 2 undealt Hero Assist cards
+    ...viltrumiteAttackCards,      // All 3 Viltrumite Attacks
+    ...actionCards                 // The 13 remaining action/basic cards
   ];
 
-  // Step 6: Shuffle the draw deck so Exploding Viltrumites are randomly placed
+  // Step 6: Shuffle the draw deck so Viltrumite Attacks are randomly placed
   shuffleDeck(deck);
 
   // Step 7: Build and return the complete game state object
@@ -87,15 +87,15 @@ function createGameState() {
     currentPlayer: 0,               // Player 0 (human) goes first
     turnNumber: 1,
     turnsRemaining: { 0: 1, 1: 1, 2: 1, 3: 1 },  // How many draws each player must take
-    pendingExplodingViltrumite: null,   // Set when a player defuses an Exploding Viltrumite
-    pendingPlayer: null,            // Which player needs to place the defused viltrumite
-    pendingFavor: null,             // Player ID who played Favor and is waiting
-    favorTarget: null,              // Player ID who must give a card
-    waitingForFavor: null,          // Same as pendingFavor (used for UI checks)
-    seeTheFutureCards: null,        // Top 3 cards shown to the player
-    seeTheFuturePlayer: null,       // Which player used See the Future
-    attackNotification: null,       // Info about an attack for UI display
-    gameover: null                  // Set when only one player remains
+    pendingViltrumiteAttack: null,   // Set when a player counters a Viltrumite Attack
+    pendingPlayer: null,             // Which player needs to place the countered Viltrumite Attack
+    pendingFavor: null,              // Player ID who played Favor and is waiting
+    favorTarget: null,               // Player ID who must give a card
+    waitingForFavor: null,           // Same as pendingFavor (used for UI checks)
+    seeTheFutureCards: null,         // Top 3 cards shown to the player
+    seeTheFuturePlayer: null,        // Which player used See the Future
+    attackNotification: null,        // Info about an attack for UI display
+    gameover: null                   // Set when only one player remains
   };
 }
 
@@ -103,8 +103,8 @@ function createGameState() {
 // getNextAlivePlayer(state, fromPlayer) - find the next player still in game
 // ---------------------------------------------------------------------------
 // Players sit in a circle: 0 -> 1 -> 2 -> 3 -> 0 -> ...
-// We skip anyone who has been eliminated (hit by an Exploding Viltrumite
-// without a Defuse card). In the worst case we check all 4 seats.
+// We skip anyone who has been eliminated (hit by a Viltrumite Attack
+// without a Hero Assist card). In the worst case we check all 4 seats.
 
 function getNextAlivePlayer(state, fromPlayer) {
   let next = fromPlayer;
@@ -158,12 +158,12 @@ function endTurn(state) {
 // ---------------------------------------------------------------------------
 // drawCard(state, playerIndex) - draw the top card from the deck
 // ---------------------------------------------------------------------------
-// This is the most complex action because drawing an Exploding Viltrumite
+// This is the most complex action because drawing a Viltrumite Attack
 // triggers a chain of events:
-//   - If the player has a Defuse card, they can defuse it and must then
-//     place the Exploding Viltrumite back into the deck (handled by
-//     placeExplodingViltrumite).
-//   - If they don't have a Defuse, they're eliminated from the game.
+//   - If the player has a Hero Assist card, they can counter it and must then
+//     place the Viltrumite Attack back into the deck (handled by
+//     placeViltrumiteAttack).
+//   - If they don't have a Hero Assist, they're eliminated from the game.
 //
 // The turnsRemaining system handles the Attack card: when attacked, a
 // player must draw multiple times before their turn ends.
@@ -174,25 +174,25 @@ function drawCard(state, playerIndex) {
   // Pop the last element (top of deck)
   const card = state.deck.pop();
 
-  // --- Exploding Viltrumite drawn! ---
-  if (card.type === 'exploding') {
-    // Check if the player has a Defuse card to save themselves
-    const defuseIndex = player.hand.findIndex(c => c.type === 'defuse');
+  // --- Viltrumite Attack drawn! ---
+  if (card.type === 'viltrumite_attack') {
+    // Check if the player has a Hero Assist card to save themselves
+    const heroAssistIndex = player.hand.findIndex(c => c.type === 'hero_assist');
 
-    if (defuseIndex !== -1) {
-      // Player has a Defuse card - they survive!
-      // Remove the Defuse from their hand and discard it
-      const defuseCard = player.hand.splice(defuseIndex, 1)[0];
-      state.discardPile.push(defuseCard);
+    if (heroAssistIndex !== -1) {
+      // Player has a Hero Assist card - they survive!
+      // Remove the Hero Assist from their hand and discard it
+      const heroAssistCard = player.hand.splice(heroAssistIndex, 1)[0];
+      state.discardPile.push(heroAssistCard);
 
-      // The Exploding Viltrumite must now be placed back into the deck
-      // (the player chooses where - see placeExplodingViltrumite)
-      state.pendingExplodingViltrumite = card;
+      // The Viltrumite Attack must now be placed back into the deck
+      // (the player chooses where - see placeViltrumiteAttack)
+      state.pendingViltrumiteAttack = card;
       state.pendingPlayer = playerIndex;
 
       return { result: 'defused' };
     } else {
-      // No Defuse card - player is eliminated!
+      // No Hero Assist card - player is eliminated!
       player.isEliminated = true;
       state.discardPile.push(card);
 
@@ -225,9 +225,9 @@ function drawCard(state, playerIndex) {
 }
 
 // ---------------------------------------------------------------------------
-// placeExplodingViltrumite(state, position) - put a defused viltrumite back in deck
+// placeViltrumiteAttack(state, position) - put a countered Viltrumite Attack back in deck
 // ---------------------------------------------------------------------------
-// After defusing an Exploding Viltrumite, the player secretly places it back
+// After countering a Viltrumite Attack, the player secretly places it back
 // anywhere in the draw deck. This is a key strategic decision:
 //   - Position 0 = top of deck (next player draws it immediately)
 //   - Position deck.length = bottom of deck (drawn last)
@@ -235,8 +235,8 @@ function drawCard(state, playerIndex) {
 // The deck array stores the top card at the END, so we need to convert
 // the player-facing position to an array index.
 
-function placeExplodingViltrumite(state, position) {
-  const card = state.pendingExplodingViltrumite;
+function placeViltrumiteAttack(state, position) {
+  const card = state.pendingViltrumiteAttack;
   const playerIndex = state.pendingPlayer;
 
   // Convert position to array index
@@ -245,7 +245,7 @@ function placeExplodingViltrumite(state, position) {
   state.deck.splice(actualIndex, 0, card);
 
   // Clear the pending state
-  state.pendingExplodingViltrumite = null;
+  state.pendingViltrumiteAttack = null;
   state.pendingPlayer = null;
 
   // Handle turnsRemaining (same logic as drawing a normal card)
@@ -435,26 +435,26 @@ function playSeeTheFuture(state, playerIndex, cardIndex) {
 }
 
 // ---------------------------------------------------------------------------
-// playCatPair(state, playerIndex, cardName, targetIndex) - steal with a pair
+// playBasicPair(state, playerIndex, cardName, targetIndex) - steal with a pair
 // ---------------------------------------------------------------------------
-// If you have two cat cards of the SAME type (e.g., two Tacocats), you
-// can play them as a pair to steal a random card from another player.
+// If you have two basic cards of the SAME type (e.g., two Viltrum Relics),
+// you can play them as a pair to steal a random card from another player.
 //
 // We find the two matching cards by name, remove them from hand, and
 // take a random card from the target player.
 //
 // Does NOT end the turn.
 
-function playCatPair(state, playerIndex, cardName, targetIndex) {
+function playBasicPair(state, playerIndex, cardName, targetIndex) {
   const player = state.players[playerIndex];
   const target = state.players[targetIndex];
 
-  // Find and remove the first matching cat card
+  // Find and remove the first matching basic card
   const firstIndex = player.hand.findIndex(c => c.name === cardName);
   const firstCard = player.hand.splice(firstIndex, 1)[0];
   state.discardPile.push(firstCard);
 
-  // Find and remove the second matching cat card
+  // Find and remove the second matching basic card
   // (findIndex searches the updated hand after the first was removed)
   const secondIndex = player.hand.findIndex(c => c.name === cardName);
   const secondCard = player.hand.splice(secondIndex, 1)[0];
@@ -469,18 +469,18 @@ function playCatPair(state, playerIndex, cardName, targetIndex) {
 }
 
 // ---------------------------------------------------------------------------
-// playSingleCat(state, playerIndex, cardIndex) - play one cat card alone
+// playSingleBasic(state, playerIndex, cardIndex) - play one basic card alone
 // ---------------------------------------------------------------------------
-// A single cat card has no effect on its own - you need a pair to steal.
+// A single basic card has no effect on its own - you need a pair to steal.
 // Playing one just discards it. This might be useful to thin your hand
 // or bluff other players.
 //
 // Does NOT end the turn.
 
-function playSingleCat(state, playerIndex, cardIndex) {
+function playSingleBasic(state, playerIndex, cardIndex) {
   const player = state.players[playerIndex];
 
-  // Remove the cat card from hand and discard it (no effect)
+  // Remove the basic card from hand and discard it (no effect)
   const card = player.hand.splice(cardIndex, 1)[0];
   state.discardPile.push(card);
 }
@@ -489,7 +489,7 @@ function playSingleCat(state, playerIndex, cardIndex) {
 // getValidTargets(state, playerIndex) - who can be targeted by cards?
 // ---------------------------------------------------------------------------
 // Returns an array of player IDs that are valid targets for cards like
-// Favor and Cat Pair. A valid target must be:
+// Favor and Basic Pair. A valid target must be:
 //   - Not eliminated
 //   - Not the player themselves
 //   - Have at least one card in hand (so there's something to take)
@@ -510,14 +510,14 @@ export {
   checkGameOver,
   endTurn,
   drawCard,
-  placeExplodingViltrumite,
+  placeViltrumiteAttack,
   playSkip,
   playAttack,
   playFavor,
   resolveFavor,
   playShuffle,
   playSeeTheFuture,
-  playCatPair,
-  playSingleCat,
+  playBasicPair,
+  playSingleBasic,
   getValidTargets
 };

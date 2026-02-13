@@ -15,46 +15,46 @@
 // card types are constants that should never change during a game.
 
 const CARD_TYPES = {
-  exploding:   { name: 'Exploding Viltrumite', emoji: '💥👊', description: 'Explode unless you have a Defuse card', count: 3  },
-  defuse:      { name: 'Defuse',             emoji: '🛡️',  description: 'Defuse an Exploding Viltrumite',          count: 6  },
-  skip:        { name: 'Skip',              emoji: '⏭️',  description: 'End your turn without drawing',           count: 4  },
-  favor:       { name: 'Favor',             emoji: '🤝',  description: 'Force a player to give you a card',       count: 4  },
-  shuffle:     { name: 'Shuffle',           emoji: '🔀',  description: 'Shuffle the draw pile',                   count: 4  },
-  attack:      { name: 'Attack',            emoji: '⚔️',  description: 'End turn, next player takes 2 turns',     count: 4  },
-  see_future:  { name: 'See the Future',    emoji: '🔮',  description: 'Peek at top 3 cards of the deck',         count: 5  },
-  cat:         { name: 'Cat Card',          emoji: '🐱',  description: 'Collect pairs to steal cards',            count: 20 }
+  viltrumite_attack: { name: 'Viltrumite Attack',  emoji: '💥👊', description: 'Explode unless you have a Hero Assist card', count: 3  },
+  hero_assist:       { name: 'Hero Assist',        emoji: '🛡️',  description: 'Counter a Viltrumite Attack',                count: 6  },
+  skip:              { name: 'Skip',               emoji: '⏭️',  description: 'End your turn without drawing',              count: 4  },
+  favor:             { name: 'Favor',              emoji: '🤝',  description: 'Force a player to give you a card',          count: 4  },
+  shuffle:           { name: 'Shuffle',            emoji: '🔀',  description: 'Shuffle the draw pile',                      count: 4  },
+  attack:            { name: 'Attack',             emoji: '⚔️',  description: 'End turn, next player takes 2 turns',        count: 4  },
+  see_future:        { name: 'See the Future',     emoji: '🔮',  description: 'Peek at top 3 cards of the deck',            count: 5  },
+  basic:             { name: 'Basic Card',         emoji: '🃏',  description: 'Collect pairs to steal cards',               count: 20 }
 };
 
-// The five different cat card varieties - 4 of each in the deck (5 x 4 = 20)
-const CAT_TYPES = [
-  { name: 'Tacocat',              emoji: '🌮🐱' },
-  { name: 'Rainbow-ralphing Cat', emoji: '🌈🐱' },
-  { name: 'Potato Cat',           emoji: '🥔🐱' },
-  { name: 'Beard Cat',            emoji: '🧔🐱' },
-  { name: 'Cattermelon',          emoji: '🍉🐱' }
+// The five different basic card varieties - 4 of each in the deck (5 x 4 = 20)
+const BASIC_TYPES = [
+  { name: 'Viltrum Relic',     emoji: '🏛️' },
+  { name: 'Sequid',            emoji: '🦑' },
+  { name: 'Battle Beast',      emoji: '🦁' },
+  { name: 'Space Racer',       emoji: '🚀' },
+  { name: 'Guardians Badge',   emoji: '⭐' }
 ];
 
 // ---------------------------------------------------------------------------
-// createCard(type, catName) - build a single card object
+// createCard(type, basicName) - build a single card object
 // ---------------------------------------------------------------------------
 // Every card in the game needs a unique ID so we can track and reference it.
 // We combine Date.now() (milliseconds since 1970) with a random string to
 // make collisions practically impossible.
 
-function createCard(type, catName = null) {
+function createCard(type, basicName = null) {
   const id = `card-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 
   // Look up the base definition for this card type
   const base = CARD_TYPES[type];
 
-  // For cat cards we override the generic name/emoji with the specific variety
-  if (type === 'cat' && catName) {
-    const catType = CAT_TYPES.find(c => c.name === catName);
+  // For basic cards we override the generic name/emoji with the specific variety
+  if (type === 'basic' && basicName) {
+    const basicType = BASIC_TYPES.find(c => c.name === basicName);
     return {
       id,
       type,
-      name: catType.name,
-      emoji: catType.emoji,
+      name: basicType.name,
+      emoji: basicType.emoji,
       description: base.description
     };
   }
@@ -72,23 +72,23 @@ function createCard(type, catName = null) {
 // ---------------------------------------------------------------------------
 // createDeck() - build the full 50-card deck (unsorted)
 // ---------------------------------------------------------------------------
-// The deck composition matches the real Exploding Viltrumites game:
-//   - 3 Exploding Viltrumites
-//   - 6 Defuse cards
+// The deck composition matches the Exploding Viltrumites game:
+//   - 3 Viltrumite Attacks
+//   - 6 Hero Assist cards
 //   - 4 each of Skip, Favor, Shuffle, Attack
 //   - 5 See the Future
-//   - 20 Cat cards (4 copies of each of the 5 cat varieties)
+//   - 20 Basic cards (4 copies of each of the 5 basic varieties)
 // Total: 3 + 6 + 4 + 4 + 4 + 4 + 5 + 20 = 50 cards
 
 function createDeck() {
   const deck = [];
 
   for (const [type, info] of Object.entries(CARD_TYPES)) {
-    if (type === 'cat') {
-      // Cat cards are special - we create 4 of each variety
-      for (const catType of CAT_TYPES) {
+    if (type === 'basic') {
+      // Basic cards are special - we create 4 of each variety
+      for (const basicType of BASIC_TYPES) {
         for (let i = 0; i < 4; i++) {
-          deck.push(createCard('cat', catType.name));
+          deck.push(createCard('basic', basicType.name));
         }
       }
     } else {
@@ -136,4 +136,4 @@ function shuffleDeck(deck) {
 // Exports
 // ---------------------------------------------------------------------------
 
-export { CARD_TYPES, CAT_TYPES, createCard, createDeck, shuffleDeck };
+export { CARD_TYPES, BASIC_TYPES, createCard, createDeck, shuffleDeck };

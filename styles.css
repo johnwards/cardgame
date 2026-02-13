@@ -27,7 +27,7 @@
     --color-primary: #2a4494;    /* Retro blue  - buttons, links     */
     --color-success: #2d8b46;    /* Retro green - alive, playable    */
     --color-danger: #c0392b;     /* Retro red   - eliminated         */
-    --color-warning: #f4c542;    /* Retro gold  - cat pairs, warnings*/
+    --color-warning: #f4c542;    /* Retro gold  - basic pairs, warnings*/
     --color-purple: #5e3c8f;     /* Retro purple - favor, special    */
     --color-bg-start: #e8781e;   /* Retro orange (no gradient)       */
     --color-bg-end: #e8781e;     /* Same — kills the gradient        */
@@ -330,7 +330,7 @@ body {
     color: #ffffff;
 }
 
-.status-banner.defuse {
+.status-banner.hero-assist {
     background: var(--retro-gold-dark);
     border-color: var(--retro-gold);
     animation: fadeIn 0.3s ease, pulse 2s ease-in-out infinite;
@@ -413,9 +413,9 @@ body {
     user-select: none;
 }
 
-/* --- Viltrumite Placement Bar --- */
-/* Shown when a player must place an Exploding Viltrumite back in the deck */
-.viltrumite-placement-bar {
+/* --- Viltrumite Attack Placement Bar --- */
+/* Shown when a player must place a Viltrumite Attack back in the deck */
+.viltrumite-attack-placement-bar {
     width: 100%;
     max-width: 480px;
     background: var(--retro-red);
@@ -429,19 +429,19 @@ body {
     animation: slideUp 0.3s ease;
 }
 
-.viltrumite-placement-bar p {
+.viltrumite-attack-placement-bar p {
     font-weight: 700;
     margin-bottom: 12px;
     font-size: 0.6rem;
 }
 
-.viltrumite-placement-buttons {
+.viltrumite-attack-placement-buttons {
     display: flex;
     gap: 10px;
     justify-content: center;
 }
 
-.viltrumite-placement-buttons button {
+.viltrumite-attack-placement-buttons button {
     background: var(--retro-blue);
     color: var(--retro-gold);
     border: 3px solid var(--retro-gold);
@@ -455,7 +455,7 @@ body {
     transition: transform 0.15s ease;
 }
 
-.viltrumite-placement-buttons button:hover {
+.viltrumite-attack-placement-buttons button:hover {
     transform: translate(-2px, -2px);
     box-shadow: 5px 5px 0 #000;
 }
@@ -617,36 +617,36 @@ body {
     box-shadow: 5px 5px 0 #000;
 }
 
-/* Cat pair available - gold border with "PAIR!" label */
-.card-tile.cat-pair {
+/* Basic pair available - gold border with "PAIR!" label */
+.card-tile.basic-pair {
     border-color: var(--retro-gold);
     cursor: pointer;
 }
 
-.card-tile.cat-pair:hover {
+.card-tile.basic-pair:hover {
     transform: translate(-2px, -2px);
     box-shadow: 5px 5px 0 #000;
 }
 
-.card-tile.cat-pair .card-action {
+.card-tile.basic-pair .card-action {
     color: var(--retro-gold);
 }
 
-/* Exploding Viltrumite card - red border, "DANGER!" label */
-.card-tile.exploding-viltrumite {
+/* Viltrumite Attack card - red border, "DANGER!" label */
+.card-tile.viltrumite-attack {
     border-color: var(--retro-red);
 }
 
-.card-tile.exploding-viltrumite .card-action {
+.card-tile.viltrumite-attack .card-action {
     color: var(--retro-red);
 }
 
-/* Defuse card - green border, "SAFETY" label */
-.card-tile.defuse {
+/* Hero Assist card - green border, "SAFETY" label */
+.card-tile.hero-assist {
     border-color: var(--color-success);
 }
 
-.card-tile.defuse .card-action {
+.card-tile.hero-assist .card-action {
     color: var(--color-success);
 }
 
@@ -898,12 +898,12 @@ body {
 }
 
 /* See the Future: card type highlights */
-.stf-exploding {
+.stf-viltrumite-attack {
     background: #5a1a10;
     border-left: 4px solid var(--retro-red);
 }
 
-.stf-defuse {
+.stf-hero-assist {
     background: #1a4a20;
     border-left: 4px solid var(--color-success);
 }
