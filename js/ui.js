@@ -1,5 +1,5 @@
 /**
- * ui.js - User interface rendering for Exploding Kittens
+ * ui.js - User interface rendering for Exploding Viltrumites
  *
  * This module is responsible for turning the game state into visible
  * elements on the screen. It follows a simple pattern:
@@ -62,7 +62,7 @@ function renderGame(state, callbacks) {
   renderCPUPlayers(state);
   renderStatusBanner(state);
   renderPiles(state);
-  renderKittenPlacement(state, callbacks);
+  renderViltrumitePlacement(state, callbacks);
   renderPlayerSidebar(state, callbacks);
   renderModals(state, callbacks);
 }
@@ -85,11 +85,10 @@ function renderHeader(state) {
     playerName.textContent = 'Game Over!';
   } else if (state.currentPlayer === 0) {
     playerName.textContent = 'YOUR TURN!';
-    playerName.style.color = '#22c55e';
+    playerName.classList.add('text-retro-green');
   } else {
     const cpuName = state.players[state.currentPlayer].name;
     playerName.textContent = `${cpuName} is thinking...`;
-    playerName.style.color = '#ffffff';
   }
 }
 
@@ -141,9 +140,9 @@ function renderCPUPlayers(state) {
     card.appendChild(infoDiv);
 
     // Show action text when this CPU is active
-    if (state.pendingPlayer === i && state.pendingExplodingKitten) {
-      // CPU is deciding where to place a defused Exploding Kitten
-      const placing = createElement('div', 'thinking-text', 'PLACING KITTEN...');
+    if (state.pendingPlayer === i && state.pendingExplodingViltrumite) {
+      // CPU is deciding where to place a defused Exploding Viltrumite
+      const placing = createElement('div', 'thinking-text', 'PLACING VILTRUMITE...');
       card.appendChild(placing);
     } else if (state.currentPlayer === i && !player.isEliminated) {
       // CPU is thinking about their next move
@@ -166,18 +165,18 @@ function renderStatusBanner(state) {
 
   const humanPlayer = state.players[0];
 
-  // Priority 1: Human is placing a defused Exploding Kitten
-  if (state.pendingExplodingKitten && state.pendingPlayer === 0) {
+  // Priority 1: Human is placing a defused Exploding Viltrumite
+  if (state.pendingExplodingViltrumite && state.pendingPlayer === 0) {
     banner.className = 'status-banner defuse';
-    banner.textContent = 'You defused it! Choose where to place the Exploding Kitten...';
+    banner.textContent = 'You defused it! Choose where to place the Exploding Viltrumite...';
     return;
   }
 
-  // Priority 2: A CPU is placing a defused Exploding Kitten
-  if (state.pendingExplodingKitten && state.pendingPlayer !== null && state.pendingPlayer !== 0) {
+  // Priority 2: A CPU is placing a defused Exploding Viltrumite
+  if (state.pendingExplodingViltrumite && state.pendingPlayer !== null && state.pendingPlayer !== 0) {
     const cpuName = state.players[state.pendingPlayer].name;
     banner.className = 'status-banner defuse';
-    banner.textContent = `${cpuName} defused it! They're placing the kitten...`;
+    banner.textContent = `${cpuName} defused it! They're placing the viltrumite...`;
     return;
   }
 
@@ -244,34 +243,34 @@ function renderPiles(state) {
 }
 
 // ============================================================================
-// 5. KITTEN PLACEMENT - Buttons for placing a defused Exploding Kitten
+// 5. VILTRUMITE PLACEMENT - Buttons for placing a defused Exploding Viltrumite
 // ============================================================================
 
-function renderKittenPlacement(state, callbacks) {
-  const placement = document.getElementById('kitten-placement');
+function renderViltrumitePlacement(state, callbacks) {
+  const placement = document.getElementById('viltrumite-placement');
   const buttons = document.getElementById('placement-buttons');
 
-  // Only show when the human player needs to place an Exploding Kitten
-  if (state.pendingExplodingKitten && state.pendingPlayer === 0) {
+  // Only show when the human player needs to place an Exploding Viltrumite
+  if (state.pendingExplodingViltrumite && state.pendingPlayer === 0) {
     placement.classList.remove('hidden');
-    placement.className = 'kitten-placement-bar';
+    placement.className = 'viltrumite-placement-bar';
     clearElement(buttons);
-    buttons.className = 'kitten-placement-buttons';
+    buttons.className = 'viltrumite-placement-buttons';
 
     // Top position - the next player draws it immediately (evil move!)
     const topBtn = createElement('button', '', '\u{1F51D} TOP (EVIL!)');
-    topBtn.addEventListener('click', () => callbacks.onPlaceKitten(0));
+    topBtn.addEventListener('click', () => callbacks.onPlaceViltrumite(0));
     buttons.appendChild(topBtn);
 
     // Middle position - somewhere in the middle of the deck
     const midPosition = Math.floor(state.deck.length / 2);
     const midBtn = createElement('button', '', '\u{2195}\u{FE0F} MIDDLE');
-    midBtn.addEventListener('click', () => callbacks.onPlaceKitten(midPosition));
+    midBtn.addEventListener('click', () => callbacks.onPlaceViltrumite(midPosition));
     buttons.appendChild(midBtn);
 
     // Bottom position - safe, drawn last
     const bottomBtn = createElement('button', '', '\u{2B07}\u{FE0F} BOTTOM (SAFE)');
-    bottomBtn.addEventListener('click', () => callbacks.onPlaceKitten(state.deck.length));
+    bottomBtn.addEventListener('click', () => callbacks.onPlaceViltrumite(state.deck.length));
     buttons.appendChild(bottomBtn);
   } else {
     placement.className = 'hidden';
@@ -317,7 +316,7 @@ function renderPlayerSidebar(state, callbacks) {
 
   // Determine if there are any pending actions blocking the draw
   const hasPendingAction =
-    (state.pendingExplodingKitten && state.pendingPlayer === 0) ||
+    (state.pendingExplodingViltrumite && state.pendingPlayer === 0) ||
     state.seeTheFutureCards !== null ||
     (state.favorTarget === 0 && state.pendingFavor !== null);
 
@@ -366,7 +365,7 @@ function renderPlayerHand(state, callbacks) {
 
   // Determine if there are pending actions blocking normal play
   const hasPendingAction =
-    (state.pendingExplodingKitten && state.pendingPlayer === 0) ||
+    (state.pendingExplodingViltrumite && state.pendingPlayer === 0) ||
     state.seeTheFutureCards !== null ||
     (state.favorTarget === 0 && state.pendingFavor !== null);
 
@@ -413,7 +412,7 @@ function renderPlayerHand(state, callbacks) {
       // --- Normal play mode: depends on card type ---
       switch (card.type) {
         case 'exploding':
-          tile.classList.add('non-playable', 'exploding-kitten');
+          tile.classList.add('non-playable', 'exploding-viltrumite');
           actionText = 'DANGER!';
           break;
 
@@ -457,10 +456,8 @@ function renderPlayerHand(state, callbacks) {
           if (catCounts[card.name] >= 2) {
             tile.classList.add('cat-pair', 'playable');
             actionText = 'Play pair';
-            // Add a "PAIR!" label
+            // Add a "PAIR!" label (styled via .cat-pair .card-action in CSS)
             const pairLabel = createElement('span', 'card-action', 'PAIR!');
-            pairLabel.style.color = 'var(--color-warning)';
-            pairLabel.style.fontWeight = '700';
             tile.appendChild(pairLabel);
             tile.addEventListener('click', () => callbacks.onPlayCard(cardIndex));
           } else {
@@ -518,8 +515,8 @@ function renderHelpText(state) {
   } else if (state.favorTarget === 0 && state.pendingFavor !== null) {
     const requesterName = state.players[state.pendingFavor].name;
     helpText.textContent = `You must give a card to ${requesterName}.`;
-  } else if (state.pendingExplodingKitten && state.pendingPlayer === 0) {
-    helpText.textContent = 'Choose where to place the Exploding Kitten in the deck.';
+  } else if (state.pendingExplodingViltrumite && state.pendingPlayer === 0) {
+    helpText.textContent = 'Choose where to place the Exploding Viltrumite in the deck.';
   } else if (state.seeTheFutureCards) {
     helpText.textContent = 'Viewing the top 3 cards of the deck...';
   } else if (state.currentPlayer === 0) {
@@ -550,8 +547,7 @@ function renderModals(state, callbacks) {
     const title = createElement('h2', '', '\u{1F389}\u{1F38A} Game Over! \u{1F38A}\u{1F389}');
     content.appendChild(title);
 
-    const winner = createElement('p', '', `\u{1F3C6} ${state.gameover.winnerName} wins!`);
-    winner.style.fontSize = '1.3rem';
+    const winner = createElement('p', 'modal-highlight', `\u{1F3C6} ${state.gameover.winnerName} wins!`);
     content.appendChild(winner);
 
     const reason = createElement('p', '', state.gameover.reason);
@@ -573,14 +569,10 @@ function renderModals(state, callbacks) {
     content.className = 'modal-content attack';
 
     // Bouncing emoji header
-    const emojiHeader = createElement('p', '', '\u{2694}\u{FE0F}\u{1F4A5}');
-    emojiHeader.style.fontSize = '3rem';
-    emojiHeader.style.textAlign = 'center';
-    emojiHeader.style.animation = 'bounce 1s ease-in-out infinite';
+    const emojiHeader = createElement('p', 'modal-emoji-header', '\u{2694}\u{FE0F}\u{1F4A5}');
     content.appendChild(emojiHeader);
 
-    const title = createElement('h2', '', "YOU'VE BEEN ATTACKED!");
-    title.style.textAlign = 'center';
+    const title = createElement('h2', 'modal-text-center', "YOU'VE BEEN ATTACKED!");
     content.appendChild(title);
 
     // Random funny message
@@ -588,27 +580,22 @@ function renderModals(state, callbacks) {
       "Looks like someone doesn't like you very much!",
       "That's gonna leave a mark!",
       "Time to sweat! Good luck not exploding!",
-      "The kittens are getting restless...",
+      "The viltrumites are getting restless...",
       "Hope you have a good hand! (You'll need it)",
       "Plot twist: it's always your turn now!",
-      "Somebody call the kitten police!",
-      "This is what happens when you trust a cat..."
+      "Somebody call the GDA!",
+      "This is what happens when you trust a viltrumite..."
     ];
     const randomMessage = funnyMessages[Math.floor(Math.random() * funnyMessages.length)];
-    const messagePara = createElement('p', '', randomMessage);
-    messagePara.style.textAlign = 'center';
+    const messagePara = createElement('p', 'modal-text-center', randomMessage);
     content.appendChild(messagePara);
 
     // Damage info
-    const damage = createElement('p', '', `Damage: Take ${state.attackNotification.remainingTurns} turns`);
-    damage.style.textAlign = 'center';
-    damage.style.fontWeight = '700';
-    damage.style.fontSize = '1.1rem';
+    const damage = createElement('p', 'modal-text-center modal-highlight', `Damage: Take ${state.attackNotification.remainingTurns} turns`);
     content.appendChild(damage);
 
     // Dismiss buttons
-    const buttonRow = createElement('div', 'modal-buttons');
-    buttonRow.style.justifyContent = 'center';
+    const buttonRow = createElement('div', 'modal-buttons modal-text-center');
 
     const acceptBtn = createElement('button', 'modal-button primary', "FINE, I'LL TAKE IT! \u{1F624}");
     acceptBtn.addEventListener('click', () => {
@@ -645,17 +632,17 @@ function renderModals(state, callbacks) {
     const cardList = createElement('div', 'modal-list');
 
     state.seeTheFutureCards.forEach((card, index) => {
-      const item = createElement('div', 'modal-list-item');
-      item.style.cursor = 'default';
+      let itemClasses = 'modal-list-item';
 
-      // Highlight exploding kittens in red, defuse in green
+      // Highlight exploding viltrumites in red, defuse in green
       if (card.type === 'exploding') {
-        item.style.background = 'rgba(239, 68, 68, 0.15)';
-        item.style.borderLeft = '4px solid var(--color-danger)';
+        itemClasses += ' stf-exploding';
       } else if (card.type === 'defuse') {
-        item.style.background = 'rgba(34, 197, 94, 0.15)';
-        item.style.borderLeft = '4px solid var(--color-success)';
+        itemClasses += ' stf-defuse';
       }
+
+      const item = createElement('div', itemClasses);
+      item.style.cursor = 'default';
 
       item.textContent = `${index + 1}. ${card.emoji} ${card.name} - ${card.description}`;
       cardList.appendChild(item);
@@ -753,12 +740,10 @@ function showCatPairStealModal(state, targetId, onSelect, onCancel) {
   content.appendChild(helper);
 
   // Grid of face-down cards
-  const cardGrid = createElement('div', 'cards-grid');
-  cardGrid.style.marginBottom = '16px';
+  const cardGrid = createElement('div', 'cards-grid modal-card-grid');
 
   for (let i = 0; i < target.hand.length; i++) {
     const cardBack = createElement('div', 'card-tile playable');
-    cardBack.style.cursor = 'pointer';
 
     const backEmoji = createElement('span', 'card-emoji', '\u{1F0A0}');
     cardBack.appendChild(backEmoji);

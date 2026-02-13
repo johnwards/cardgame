@@ -1,5 +1,5 @@
 /**
- * cards.js - Card definitions and deck management for Exploding Kittens
+ * cards.js - Card definitions and deck management for Exploding Viltrumites
  *
  * This module defines every type of card in the game, and provides
  * functions to create individual cards, build a full deck, and shuffle it.
@@ -15,8 +15,8 @@
 // card types are constants that should never change during a game.
 
 const CARD_TYPES = {
-  exploding:   { name: 'Exploding Kitten',  emoji: '💥🐱', description: 'Explode unless you have a Defuse card',   count: 3  },
-  defuse:      { name: 'Defuse',            emoji: '🛡️',  description: 'Defuse an Exploding Kitten',              count: 6  },
+  exploding:   { name: 'Exploding Viltrumite', emoji: '💥👊', description: 'Explode unless you have a Defuse card', count: 3  },
+  defuse:      { name: 'Defuse',             emoji: '🛡️',  description: 'Defuse an Exploding Viltrumite',          count: 6  },
   skip:        { name: 'Skip',              emoji: '⏭️',  description: 'End your turn without drawing',           count: 4  },
   favor:       { name: 'Favor',             emoji: '🤝',  description: 'Force a player to give you a card',       count: 4  },
   shuffle:     { name: 'Shuffle',           emoji: '🔀',  description: 'Shuffle the draw pile',                   count: 4  },
@@ -72,8 +72,8 @@ function createCard(type, catName = null) {
 // ---------------------------------------------------------------------------
 // createDeck() - build the full 50-card deck (unsorted)
 // ---------------------------------------------------------------------------
-// The deck composition matches the real Exploding Kittens game:
-//   - 3 Exploding Kittens
+// The deck composition matches the real Exploding Viltrumites game:
+//   - 3 Exploding Viltrumites
 //   - 6 Defuse cards
 //   - 4 each of Skip, Favor, Shuffle, Attack
 //   - 5 See the Future

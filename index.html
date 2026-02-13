@@ -3,11 +3,34 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Exploding Kittens</title>
+  <title>Exploding Viltrumites</title>
+  <!-- Google Fonts - Press Start 2P for retro pixel-art style -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <!-- Link to external stylesheet - keeps HTML and CSS separated -->
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+
+  <!-- ============================================
+       START SCREEN
+       Retro pixel-art landing page with PLAY,
+       SETTINGS, and EXIT buttons.
+       ============================================ -->
+  <div id="start-screen">
+    <!-- Clickable buttons positioned over the background image -->
+    <button class="start-btn start-btn-play" id="play-btn">PLAY</button>
+    <button class="start-btn start-btn-settings" id="settings-btn">SETTINGS</button>
+    <button class="start-btn start-btn-exit" id="exit-btn">EXIT</button>
+  </div>
+
+  <!-- ============================================
+       GAME SCREEN
+       Wraps all existing game elements. Hidden
+       until the player clicks PLAY.
+       ============================================ -->
+  <div id="game-screen" class="hidden">
 
   <!-- ============================================
        TOP HEADER BAR
@@ -16,7 +39,7 @@
        ============================================ -->
   <header id="header">
     <div>
-      <h1>💥 EXPLODING KITTENS 💥</h1>
+      <h1>💥 EXPLODING VILTRUMITES 💥</h1>
       <span id="turn-counter"></span>
     </div>
     <div>
@@ -49,12 +72,12 @@
          CENTRE: GAME AREA
          Contains the status banner for event
          messages, the draw and discard piles,
-         and the exploding kitten placement UI.
+         and the exploding viltrumite placement UI.
          ========================================== -->
     <section id="game-area">
 
       <!-- Status banner - displays game event messages like
-           "Player 2 played a Skip!" or "You drew an Exploding Kitten!" -->
+           "Player 2 played a Skip!" or "You drew an Exploding Viltrumite!" -->
       <div id="status-banner"></div>
 
       <!-- Draw and Discard piles sit side by side in the centre -->
@@ -80,11 +103,11 @@
 
       </div>
 
-      <!-- Exploding Kitten placement UI
-           When a player defuses an Exploding Kitten they choose
+      <!-- Exploding Viltrumite placement UI
+           When a player defuses an Exploding Viltrumite they choose
            where to put it back in the draw pile. Hidden until needed. -->
-      <div id="kitten-placement" class="hidden">
-        <p>Where do you want to place the Exploding Kitten?</p>
+      <div id="viltrumite-placement" class="hidden">
+        <p>Where do you want to place the Exploding Viltrumite?</p>
         <div id="placement-buttons">
           <!-- JS will create position buttons here -->
         </div>
@@ -135,6 +158,8 @@
   <div id="modal-overlay" class="hidden">
     <div id="modal-content"></div>
   </div>
+
+  </div> <!-- end #game-screen -->
 
   <!-- ============================================
        JAVASCRIPT

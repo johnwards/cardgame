@@ -1,5 +1,5 @@
 /**
- * game.js - Core game engine for Exploding Kittens
+ * game.js - Core game engine for Exploding Viltrumites
  *
  * This module manages all game state and logic: setting up the game,
  * drawing cards, playing action cards, and determining when the game ends.
@@ -21,16 +21,16 @@ import { CARD_TYPES, CAT_TYPES, createCard, createDeck, shuffleDeck } from './ca
 // ---------------------------------------------------------------------------
 // createGameState() - set up a brand new game
 // ---------------------------------------------------------------------------
-// The setup follows the official Exploding Kittens rules:
+// The setup follows the official Exploding Viltrumites rules:
 //   1. Build the full 50-card deck
-//   2. Remove all Exploding Kittens and Defuse cards
+//   2. Remove all Exploding Viltrumites and Defuse cards
 //   3. Shuffle the remaining action/cat cards
 //   4. Deal each player 1 Defuse + 7 action/cat cards = 8 cards each
-//   5. Put leftover Defuse cards and Exploding Kittens back into the deck
+//   5. Put leftover Defuse cards and Exploding Viltrumites back into the deck
 //   6. Shuffle the final draw deck
 //
 // This ensures every player starts with a Defuse card (their first line
-// of defence) and the Exploding Kittens are only in the draw pile, never
+// of defence) and the Exploding Viltrumites are only in the draw pile, never
 // dealt directly to a player's starting hand.
 
 function createGameState() {
@@ -38,7 +38,7 @@ function createGameState() {
   const allCards = createDeck();
 
   // Step 2: Separate out special cards we don't want dealt to players
-  const explodingKittens = allCards.filter(card => card.type === 'exploding');
+  const explodingViltrumites = allCards.filter(card => card.type === 'exploding');
   const defuseCards = allCards.filter(card => card.type === 'defuse');
   const actionCards = allCards.filter(card => card.type !== 'exploding' && card.type !== 'defuse');
 
@@ -68,15 +68,15 @@ function createGameState() {
   }
 
   // Step 5: Build the draw deck from what's left
-  // Remaining: 2 Defuse cards (6 total - 4 dealt) + 3 Exploding Kittens
+  // Remaining: 2 Defuse cards (6 total - 4 dealt) + 3 Exploding Viltrumites
   //          + 13 leftover action/cat cards = 18 cards
   const deck = [
     ...defuseCards.slice(4),   // The 2 undealt Defuse cards
-    ...explodingKittens,        // All 3 Exploding Kittens
+    ...explodingViltrumites,        // All 3 Exploding Viltrumites
     ...actionCards              // The 13 remaining action/cat cards
   ];
 
-  // Step 6: Shuffle the draw deck so Exploding Kittens are randomly placed
+  // Step 6: Shuffle the draw deck so Exploding Viltrumites are randomly placed
   shuffleDeck(deck);
 
   // Step 7: Build and return the complete game state object
@@ -87,8 +87,8 @@ function createGameState() {
     currentPlayer: 0,               // Player 0 (human) goes first
     turnNumber: 1,
     turnsRemaining: { 0: 1, 1: 1, 2: 1, 3: 1 },  // How many draws each player must take
-    pendingExplodingKitten: null,   // Set when a player defuses an Exploding Kitten
-    pendingPlayer: null,            // Which player needs to place the defused kitten
+    pendingExplodingViltrumite: null,   // Set when a player defuses an Exploding Viltrumite
+    pendingPlayer: null,            // Which player needs to place the defused viltrumite
     pendingFavor: null,             // Player ID who played Favor and is waiting
     favorTarget: null,              // Player ID who must give a card
     waitingForFavor: null,          // Same as pendingFavor (used for UI checks)
@@ -103,7 +103,7 @@ function createGameState() {
 // getNextAlivePlayer(state, fromPlayer) - find the next player still in game
 // ---------------------------------------------------------------------------
 // Players sit in a circle: 0 -> 1 -> 2 -> 3 -> 0 -> ...
-// We skip anyone who has been eliminated (hit by an Exploding Kitten
+// We skip anyone who has been eliminated (hit by an Exploding Viltrumite
 // without a Defuse card). In the worst case we check all 4 seats.
 
 function getNextAlivePlayer(state, fromPlayer) {
@@ -158,11 +158,11 @@ function endTurn(state) {
 // ---------------------------------------------------------------------------
 // drawCard(state, playerIndex) - draw the top card from the deck
 // ---------------------------------------------------------------------------
-// This is the most complex action because drawing an Exploding Kitten
+// This is the most complex action because drawing an Exploding Viltrumite
 // triggers a chain of events:
 //   - If the player has a Defuse card, they can defuse it and must then
-//     place the Exploding Kitten back into the deck (handled by
-//     placeExplodingKitten).
+//     place the Exploding Viltrumite back into the deck (handled by
+//     placeExplodingViltrumite).
 //   - If they don't have a Defuse, they're eliminated from the game.
 //
 // The turnsRemaining system handles the Attack card: when attacked, a
@@ -174,7 +174,7 @@ function drawCard(state, playerIndex) {
   // Pop the last element (top of deck)
   const card = state.deck.pop();
 
-  // --- Exploding Kitten drawn! ---
+  // --- Exploding Viltrumite drawn! ---
   if (card.type === 'exploding') {
     // Check if the player has a Defuse card to save themselves
     const defuseIndex = player.hand.findIndex(c => c.type === 'defuse');
@@ -185,9 +185,9 @@ function drawCard(state, playerIndex) {
       const defuseCard = player.hand.splice(defuseIndex, 1)[0];
       state.discardPile.push(defuseCard);
 
-      // The Exploding Kitten must now be placed back into the deck
-      // (the player chooses where - see placeExplodingKitten)
-      state.pendingExplodingKitten = card;
+      // The Exploding Viltrumite must now be placed back into the deck
+      // (the player chooses where - see placeExplodingViltrumite)
+      state.pendingExplodingViltrumite = card;
       state.pendingPlayer = playerIndex;
 
       return { result: 'defused' };
@@ -225,9 +225,9 @@ function drawCard(state, playerIndex) {
 }
 
 // ---------------------------------------------------------------------------
-// placeExplodingKitten(state, position) - put a defused kitten back in deck
+// placeExplodingViltrumite(state, position) - put a defused viltrumite back in deck
 // ---------------------------------------------------------------------------
-// After defusing an Exploding Kitten, the player secretly places it back
+// After defusing an Exploding Viltrumite, the player secretly places it back
 // anywhere in the draw deck. This is a key strategic decision:
 //   - Position 0 = top of deck (next player draws it immediately)
 //   - Position deck.length = bottom of deck (drawn last)
@@ -235,8 +235,8 @@ function drawCard(state, playerIndex) {
 // The deck array stores the top card at the END, so we need to convert
 // the player-facing position to an array index.
 
-function placeExplodingKitten(state, position) {
-  const card = state.pendingExplodingKitten;
+function placeExplodingViltrumite(state, position) {
+  const card = state.pendingExplodingViltrumite;
   const playerIndex = state.pendingPlayer;
 
   // Convert position to array index
@@ -245,7 +245,7 @@ function placeExplodingKitten(state, position) {
   state.deck.splice(actualIndex, 0, card);
 
   // Clear the pending state
-  state.pendingExplodingKitten = null;
+  state.pendingExplodingViltrumite = null;
   state.pendingPlayer = null;
 
   // Handle turnsRemaining (same logic as drawing a normal card)
@@ -510,7 +510,7 @@ export {
   checkGameOver,
   endTurn,
   drawCard,
-  placeExplodingKitten,
+  placeExplodingViltrumite,
   playSkip,
   playAttack,
   playFavor,

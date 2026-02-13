@@ -1,18 +1,18 @@
 /**
- * cpu.js - CPU Player AI for Exploding Kittens
+ * cpu.js - CPU Player AI for Exploding Viltrumites
  *
  * This module controls the computer-controlled players in the game.
  * Each CPU player picks a RANDOM legal move on each action - there is
  * no strategy here, just random selection from all valid options.
  *
  * A more advanced AI could weigh moves (e.g. prefer playing a Skip when
- * an Exploding Kitten is near the top of the deck), but random selection
+ * an Exploding Viltrumite is near the top of the deck), but random selection
  * keeps the code simple and is a good baseline to build upon.
  */
 
 import {
   drawCard, playSkip, playAttack, playFavor, playShuffle,
-  playSeeTheFuture, playCatPair, playSingleCat, placeExplodingKitten,
+  playSeeTheFuture, playCatPair, playSingleCat, placeExplodingViltrumite,
   getValidTargets
 } from './game.js';
 
@@ -76,7 +76,7 @@ function wait(ms) {
  * checks the player's hand and the current game state to build a list
  * of every legal action.
  *
- * Special states (like needing to place an Exploding Kitten back in the
+ * Special states (like needing to place an Exploding Viltrumite back in the
  * deck) are checked first, because they override normal play.
  *
  * @param {object} state - The current game state
@@ -91,15 +91,15 @@ function getLegalMoves(state, playerIndex) {
     return [{ type: 'waitForFavor' }];
   }
 
-  // --- Special state: must place an Exploding Kitten back in the deck ---
-  // The CPU drew an Exploding Kitten but had a Defuse card, so now they
-  // must choose where in the deck to place the kitten back.
-  if (state.pendingExplodingKitten && state.pendingPlayer === playerIndex) {
+  // --- Special state: must place an Exploding Viltrumite back in the deck ---
+  // The CPU drew an Exploding Viltrumite but had a Defuse card, so now they
+  // must choose where in the deck to place the viltrumite back.
+  if (state.pendingExplodingViltrumite && state.pendingPlayer === playerIndex) {
     return [
-      { type: 'placeExplodingKitten', position: 0 },                                    // top of deck
-      { type: 'placeExplodingKitten', position: Math.floor(state.deck.length / 3) },     // one-third down
-      { type: 'placeExplodingKitten', position: Math.floor(state.deck.length * 2 / 3) }, // two-thirds down
-      { type: 'placeExplodingKitten', position: state.deck.length }                      // bottom of deck
+      { type: 'placeExplodingViltrumite', position: 0 },                                    // top of deck
+      { type: 'placeExplodingViltrumite', position: Math.floor(state.deck.length / 3) },     // one-third down
+      { type: 'placeExplodingViltrumite', position: Math.floor(state.deck.length * 2 / 3) }, // two-thirds down
+      { type: 'placeExplodingViltrumite', position: state.deck.length }                      // bottom of deck
     ];
   }
 
@@ -144,9 +144,9 @@ function getLegalMoves(state, playerIndex) {
         }
         break;
 
-      // Defuse and Exploding Kitten cards are never voluntarily played
-      // - Defuse is used automatically when you draw an Exploding Kitten
-      // - Exploding Kitten is never in a player's hand during normal play
+      // Defuse and Exploding Viltrumite cards are never voluntarily played
+      // - Defuse is used automatically when you draw an Exploding Viltrumite
+      // - Exploding Viltrumite is never in a player's hand during normal play
     }
   }
 
@@ -200,8 +200,8 @@ function executeMove(state, playerIndex, move) {
     case 'playCatPair':
       return { ...playCatPair(state, playerIndex, move.cardName, move.targetIndex), action: 'catPair' };
 
-    case 'placeExplodingKitten':
-      return { ...placeExplodingKitten(state, move.position), action: 'placeKitten' };
+    case 'placeExplodingViltrumite':
+      return { ...placeExplodingViltrumite(state, move.position), action: 'placeViltrumite' };
 
     case 'waitForFavor':
       // Nothing to execute - just signal that we're waiting for the human
@@ -224,7 +224,7 @@ function executeMove(state, playerIndex, move) {
  *   - Draws a card (this always ends the action loop)
  *   - Plays an Attack card (passes turn to next player)
  *   - Plays a Skip card and has no remaining turns
- *   - Places an Exploding Kitten and doesn't continue
+ *   - Places an Exploding Viltrumite and doesn't continue
  *
  * A turn does NOT end when the CPU plays:
  *   - Shuffle, See the Future, Favor, or Cat Pairs (these are "free" actions)
@@ -284,9 +284,9 @@ async function executeCPUTurn(state, playerIndex, onStateChange) {
     // turns (if the CPU was under an Attack). Check the result.
     if (result.action === 'skip' && result.turnEnded) break;
 
-    // After placing an Exploding Kitten back in the deck, check if
+    // After placing an Exploding Viltrumite back in the deck, check if
     // the CPU's turn continues (it might if they had multiple turns)
-    if (result.action === 'placeKitten') {
+    if (result.action === 'placeViltrumite') {
       if (!result.continueTurn) break;
     }
 
